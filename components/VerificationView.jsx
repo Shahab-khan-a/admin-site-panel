@@ -1,7 +1,10 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { subscribeToNotice } from '../lib/firestoreService';
 
 export default function VerificationView({ tokenData }) {
-  const data = {
+  const [data, setData] = useState({
     noticeNumber: tokenData?.noticeNumber || "TW0586633",
     noticeType: tokenData?.noticeType || "تصريح إعارة أجير",
     startDate: tokenData?.startDate || "2026-09-27",
@@ -17,7 +20,23 @@ export default function VerificationView({ tokenData }) {
     statusText: tokenData?.statusText || "ساري / فعال",
     verificationMessage: tokenData?.verificationMessage || "تم التحقق من التصريح بنجاح",
     isValid: tokenData?.isValid !== false
-  };
+  });
+
+  // Real-time synchronization with Firebase Firestore
+  // When anyone opens this link on any device in the world, it loads the latest Firebase data!
+  useEffect(() => {
+    const unsubscribe = subscribeToNotice((firestoreData) => {
+      if (firestoreData) {
+        setData(firestoreData);
+      }
+    });
+
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
+  }, []);
 
   return (
     <div className="qiwa-ajeer-app" suppressHydrationWarning>

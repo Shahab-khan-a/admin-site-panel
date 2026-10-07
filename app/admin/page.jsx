@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { saveNoticeToFirestore, fetchNoticeFromFirestore } from '../../lib/firestoreService';
 import '../../public/dist/css/admin.css';
 
 export default function AdminPage() {
@@ -34,18 +35,29 @@ export default function AdminPage() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
   const [showPreview, setShowPreview] = useState(true);
+  const [firebaseStatus, setFirebaseStatus] = useState('checking'); // 'connected' | 'needs-rules' | 'offline'
 
-  // Fetch initial data from server
+  // Fetch initial data on load (first Firestore, then server API fallback)
   useEffect(() => {
     async function loadData() {
       try {
+        // 1. Try fetching directly from Firebase Firestore
+        const firestoreData = await fetchNoticeFromFirestore();
+        if (firestoreData) {
+          setFormData(firestoreData);
+          setFirebaseStatus('connected');
+          setLoading(false);
+          return;
+        }
+
+        // 2. Fallback to API route
         const res = await fetch('/api/notice');
         const json = await res.json();
         if (json.success && json.data) {
           setFormData(json.data);
         }
       } catch (err) {
-        console.error('Failed to load notice data:', err);
+        console.error('Failed to load initial notice data:', err);
       } finally {
         setLoading(false);
       }
@@ -72,20 +84,29 @@ export default function AdminPage() {
   const handleSave = async (e) => {
     if (e) e.preventDefault();
     setSaving(true);
+
     try {
+      // Step 1: Save directly to Firebase Firestore
+      const firestoreResult = await saveNoticeToFirestore(formData);
+
+      // Step 2: Also save to Next.js API / Local storage
       const res = await fetch('/api/notice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
       const json = await res.json();
-      if (json.success) {
-        showToast('✓ تم حفظ التعديلات بنجاح وتم تحديث الصفحة الرئيسية فوراً!', 'success');
+
+      if (firestoreResult.success) {
+        setFirebaseStatus('connected');
+        showToast('✓ تم حفظ التعديلات في Firebase بنجاح! سيظهر التحديث لجميع المستخدمين عبر الرابط فوراً.', 'success');
       } else {
-        showToast('حدث خطأ أثناء حفظ البيانات', 'error');
+        // Firebase gave permission-denied
+        setFirebaseStatus('needs-rules');
+        showToast('تم الحفظ محلياً. تنبيه: يرجى تفعيل Rules في Firebase Console ليتم الحفظ سحابياً.', 'warning');
       }
     } catch (err) {
-      showToast('حدث خطأ في الاتصال بالخادم', 'error');
+      showToast('حدث خطأ أثناء حفظ التعديلات: ' + err.message, 'error');
     } finally {
       setSaving(false);
     }
@@ -101,7 +122,8 @@ export default function AdminPage() {
       const json = await res.json();
       if (json.success && json.data) {
         setFormData(json.data);
-        showToast('↺ تمت استعادة البيانات الأصلية بنجاح!', 'success');
+        await saveNoticeToFirestore(json.data);
+        showToast('↺ تمت استعادة البيانات الأصلية وحفظها في Firebase بنجاح!', 'success');
       }
     } catch (err) {
       showToast('حدث خطأ أثناء استعادة البيانات', 'error');
@@ -114,14 +136,14 @@ export default function AdminPage() {
     setToast({ message, type });
     setTimeout(() => {
       setToast(null);
-    }, 4000);
+    }, 5000);
   };
 
   return (
     <div className="admin-wrapper" dir="rtl">
       {/* Toast Alert */}
       {toast && (
-        <div className={`admin-toast admin-toast-${toast.type}`}>
+        <div className={`admin-toast admin-toast-${toast.type === 'warning' ? 'error' : toast.type}`}>
           <span>{toast.message}</span>
         </div>
       )}
@@ -133,14 +155,14 @@ export default function AdminPage() {
             <img src="/dist/img/ajeer-logo.png" alt="Ajeer" />
             <div className="admin-brand-divider" />
             <div className="admin-brand-info">
-              <h1>لوحة التحكم | إدارة تصريح أجير</h1>
-              <p>تعديل بيانات التصريح والعامل والمنشأة مباشرة</p>
+              <h1>لوحة التحكم | إدارة تصريح أجير (Firebase)</h1>
+              <p>مشروع Firebase: site-panel-b86c8 | حفظ تلقائي سحابي ومباشر</p>
             </div>
           </div>
 
           <div className="admin-nav-actions">
             <Link href="/" target="_blank" className="admin-btn admin-btn-outline">
-              <span>معاينة الصفحة الرئيسية ↗</span>
+              <span>معاينة الرابط الرئيسي ↗</span>
             </Link>
             <button
               type="button"
@@ -156,7 +178,7 @@ export default function AdminPage() {
               disabled={saving || loading}
               className="admin-btn admin-btn-primary"
             >
-              {saving ? <span>جارٍ الحفظ...</span> : <span>حفظ التعديلات ✓</span>}
+              {saving ? <span>جارٍ الحفظ في Firebase...</span> : <span>حفظ التعديلات ✓</span>}
             </button>
           </div>
         </div>
@@ -164,9 +186,34 @@ export default function AdminPage() {
 
       {/* Main Content Form */}
       <main className="admin-container">
+        {/* Firebase Status Badge */}
+        {firebaseStatus === 'needs-rules' && (
+          <div
+            style={{
+              background: '#fffbeb',
+              border: '1px solid #fde68a',
+              borderRadius: '10px',
+              padding: '14px 18px',
+              marginBottom: '20px',
+              color: '#92400e',
+              fontSize: '14px',
+              lineHeight: '1.6',
+            }}
+          >
+            <strong>تنبيه إعداد قواعد Firebase (Firestore Rules):</strong>
+            <p style={{ margin: '4px 0 0' }}>
+              لكي يتم حفظ البيانات في السحابة لجميع المستخدمين، يرجى الدخول إلى <strong>Firebase Console &gt; Firestore Database &gt; Rules</strong> وتعيين القواعد للسماح بالقراءة والكتابة:
+              <br />
+              <code style={{ background: '#fef3c7', padding: '2px 6px', borderRadius: '4px', display: 'inline-block', marginTop: '4px' }}>
+                allow read, write: if true;
+              </code>
+            </p>
+          </div>
+        )}
+
         {loading ? (
           <div style={{ textAlign: 'center', padding: '60px 0', fontSize: '18px', color: '#64748b' }}>
-            جارٍ تحميل بيانات التصريح...
+            جارٍ الاتصال بـ Firebase وتحميل بيانات التصريح...
           </div>
         ) : (
           <form onSubmit={handleSave}>
@@ -561,20 +608,20 @@ export default function AdminPage() {
                 <div className="admin-sticky-status">
                   <div className="admin-status-indicator" />
                   <span>
-                    جميع التعديلات يتم حفظها تلقائياً وتنعكس على الصفحة الرئيسية مباشرة فور الضغط على حفظ.
+                    يتم تخزين التعديلات في Firebase Firestore سحابياً وتنعكس فوراً على أي مستخدم يفتح الرابط.
                   </span>
                 </div>
                 <div className="admin-nav-actions">
                   <Link href="/" target="_blank" className="admin-btn admin-btn-outline">
-                    <span>فتح الصفحة الرئيسية ↗</span>
+                    <span>فتح الرابط الرئيسي ↗</span>
                   </Link>
                   <button
                     type="submit"
                     disabled={saving || loading}
                     className="admin-btn admin-btn-primary"
-                    style={{ minWidth: '150px' }}
+                    style={{ minWidth: '170px' }}
                   >
-                    {saving ? <span>جارٍ الحفظ...</span> : <span>حفظ التعديلات ✓</span>}
+                    {saving ? <span>جارٍ الحفظ في Firebase...</span> : <span>حفظ التعديلات ✓</span>}
                   </button>
                 </div>
               </div>
