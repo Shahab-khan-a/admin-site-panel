@@ -1,0 +1,254 @@
+.verification-page {
+    background: #f7f8f7;
+    min-height: 70vh;
+    padding: 28px 14px 54px;
+}
+
+.verification-document {
+    background: #fbfcfb;
+    border: 1px solid #cfd3d8;
+    color: #071017;
+    direction: rtl;
+    margin: 0 auto;
+    max-width: 1040px;
+}
+
+.verification-header {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+}
+
+.verification-header td {
+    border: 1px solid #cfd3d8;
+    height: 126px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.verification-header__result {
+    width: 22%;
+}
+
+.verification-header__title {
+    width: 48%;
+}
+
+.verification-header__logos {
+    width: 30%;
+}
+
+.verification-title {
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.35;
+    margin: 0;
+}
+
+.verification-result {
+    display: inline-block;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.5;
+    padding: 0 12px;
+}
+
+.verification-result--valid {
+    color: #176747;
+}
+
+.verification-result--expired,
+.verification-result--canceled,
+.verification-result--invalid,
+.verification-result--system,
+.verification-result--tampered {
+    color: #9f2f23;
+}
+
+.verification-result span {
+    display: block;
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.verification-logo {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.verification-logo--ajeer {
+    margin-left: 18px;
+    width: 74px;
+}
+
+.verification-logo--hrsd {
+    width: 172px;
+}
+
+.verification-copy {
+    font-size: 18px;
+    line-height: 1.9;
+    margin: 64px auto 36px;
+    max-width: 900px;
+    text-align: center;
+}
+
+.verification-copy p {
+    margin: 0;
+}
+
+.verification-table {
+    border-collapse: collapse;
+    margin: 0 auto 0;
+    table-layout: fixed;
+    width: calc(100% - 34px);
+}
+
+.verification-table + .verification-table {
+    margin-top: 0;
+}
+
+.verification-table th,
+.verification-table td {
+    border: 1px solid #cfd3d8;
+    font-size: 17px;
+    line-height: 1.45;
+    padding: 10px 12px;
+    vertical-align: middle;
+    word-break: break-word;
+}
+
+.verification-table__section th {
+    background: #e9eeee;
+    font-size: 19px;
+    font-weight: 700;
+    padding: 12px;
+    text-align: center;
+}
+
+.verification-table__label {
+    background: #e9eeee;
+    font-weight: 400;
+    text-align: right;
+    width: 24%;
+}
+
+.verification-table__label span {
+    color: #5d686d;
+    display: block;
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.verification-table__value {
+    background: #fbfcfb;
+    font-weight: 700;
+    text-align: center;
+    width: 26%;
+}
+
+.verification-actions {
+    margin: 24px 17px 0;
+    text-align: center;
+}
+
+.verification-actions button {
+    background: #1f6f55;
+    border: 0;
+    color: #fbfcfb;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 11px 22px;
+}
+
+/* Footer Helper Classes */
+.footer-nav-col {
+    color: #1F2548;
+}
+
+.footer-nav-row {
+    padding-bottom: 10px;
+}
+
+.footer-x-icon {
+    width: 1.4rem;
+    height: 1.45rem;
+}
+
+.footer-send-icon {
+    font-size: 1.5rem;
+}
+
+.footer-phone-icon {
+    font-size: 1.4rem;
+}
+
+.footer-border-desktop {
+    border-left: solid 1px #EBEBEB;
+}
+
+.footer-border-mobile {
+    border-left: solid 2px #EBEBEB;
+    width: 50%;
+}
+
+.footer-stamp-logo {
+    max-width: 300px;
+}
+
+@media (max-width: 760px) {
+    .verification-page {
+        padding: 12px 8px 34px;
+    }
+
+    .verification-document {
+        border-width: 1px;
+    }
+
+    .verification-header,
+    .verification-header tbody,
+    .verification-header tr,
+    .verification-header td {
+        display: block;
+        width: 100%;
+    }
+
+    .verification-header td {
+        box-sizing: border-box;
+        height: auto;
+        padding: 18px 10px;
+    }
+
+    .verification-title {
+        font-size: 24px;
+    }
+
+    .verification-copy {
+        font-size: 15px;
+        margin: 30px 16px 24px;
+    }
+
+    .verification-table {
+        width: calc(100% - 16px);
+    }
+
+    .verification-table,
+    .verification-table tbody,
+    .verification-table tr,
+    .verification-table th,
+    .verification-table td {
+        display: block;
+    }
+
+    .verification-table th,
+    .verification-table td {
+        box-sizing: border-box;
+        text-align: right;
+        width: 100%;
+    }
+
+    .verification-table__value {
+        text-align: right;
+    }
+}

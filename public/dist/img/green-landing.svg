@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1918px" height="406px" viewBox="0 0 1918 406" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 60.1 (88133) - https://sketch.com -->
+    <title>Group 18</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Homepage" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g transform="translate(0.000000, -1316.000000)" id="Group-18">
+            <g transform="translate(-566.000000, 1316.000000)">
+                <g id="Group-20">
+                    <rect id="Rectangle" fill="#F5F5F6" x="564" y="0" width="1920" height="406"></rect>
+                    <g id="Group-19" transform="translate(0.000000, 86.000000)" fill="#43A160" fill-rule="nonzero">
+                        <path d="M2.27373675e-13,172.379998 L2.27373675e-13,233.03 L1106.7,233.03 C1106.7,216.943807 1100.31361,201.5157 1088.93896,190.141044 C1077.5643,178.766387 1062.13619,172.377347 1046.05,172.379998 L2.27373675e-13,172.379998 Z" id="Path"></path>
+                        <path d="M0,86.1999983 L0,146.85 L1189.93,146.85 C1189.93,130.763807 1183.54361,115.3357 1172.16896,103.961044 C1160.7943,92.5863875 1145.36619,86.197347 1129.28,86.1999983 L0,86.1999983 Z" id="Path"></path>
+                        <path d="M0,-1.81188398e-13 L0,60.65 L1106.7,60.65 C1106.7,27.1539299 1079.54607,-1.81188398e-13 1046.05,-1.81188398e-13 L0,-1.81188398e-13 Z" id="Path"></path>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
