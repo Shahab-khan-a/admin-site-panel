@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const data = getNoticeData();
+    const data = await getNoticeData();
     return NextResponse.json({ success: true, data });
   } catch (error) {
     return NextResponse.json(
@@ -18,7 +18,7 @@ export async function GET() {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const saved = saveNoticeData(body);
+    const saved = await saveNoticeData(body);
     return NextResponse.json({ success: true, data: saved });
   } catch (error) {
     return NextResponse.json(
@@ -30,7 +30,7 @@ export async function POST(request) {
 
 export async function DELETE() {
   try {
-    const defaultData = resetNoticeData();
+    const defaultData = await resetNoticeData();
     return NextResponse.json({ success: true, data: defaultData });
   } catch (error) {
     return NextResponse.json(

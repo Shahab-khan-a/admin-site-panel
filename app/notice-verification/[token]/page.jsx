@@ -7,7 +7,7 @@ export const revalidate = 0;
 export default async function NoticeVerificationPage({ params }) {
   const resolvedParams = await params;
   const token = resolvedParams?.token;
-  const tokenData = parseTokenData(token);
+  const tokenData = await parseTokenData(token);
 
   return <VerificationView tokenData={tokenData} />;
 }
