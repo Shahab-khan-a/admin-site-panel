@@ -10,8 +10,15 @@ export default function VerificationView({ tokenData, tokenId }) {
     ...tokenData
   });
 
+  // Dynamically update document title from Firebase
+  useEffect(() => {
+    if (data.pageTitle && typeof document !== 'undefined') {
+      document.title = data.pageTitle;
+    }
+  }, [data.pageTitle]);
+
   // Real-time synchronization with Firebase Firestore
-  // All static text & data loads directly from Firestore!
+  // 100% of all static text & dynamic data loads directly from Firestore!
   useEffect(() => {
     const targetDocId = tokenId || 'current';
     const unsubscribe = subscribeToNotice((firestoreData) => {
@@ -37,12 +44,18 @@ export default function VerificationView({ tokenData, tokenId }) {
           <div className="container-fluid">
             <div className="mainHeader__logoContainer">
               <a href="/">
-                <img src="/dist/img/ajeer-logo.png" alt="Qiwa Ajeer" />
+                <img
+                  src="/dist/img/ajeer-logo.png"
+                  alt={data.headerLogoAjeerAlt || "أجير"}
+                />
               </a>
             </div>
             <div className="mainHeader__logoContainer mainHeader__logoContainer--right">
-              <a href="https://mlsd.gov.sa/">
-                <img src="/dist/img/mlsd-logo.png" alt="MLSD" />
+              <a href={data.footerMlsdUrl || "https://mlsd.gov.sa/"}>
+                <img
+                  src="/dist/img/mlsd-logo.png"
+                  alt={data.headerLogoMlsdAlt || "وزارة الموارد البشرية والتنمية الاجتماعية"}
+                />
               </a>
             </div>
           </div>
@@ -61,12 +74,12 @@ export default function VerificationView({ tokenData, tokenId }) {
                         <img
                           className="verification-logo verification-logo--ajeer"
                           src="/dist/img/ajeer-logo.png"
-                          alt="أجير"
+                          alt={data.headerLogoAjeerAlt || "أجير"}
                         />
                         <img
                           className="verification-logo verification-logo--hrsd"
                           src="/dist/img/mlsd-logo.png"
-                          alt="وزارة الموارد البشرية والتنمية الاجتماعية"
+                          alt={data.headerLogoMlsdAlt || "وزارة الموارد البشرية والتنمية الاجتماعية"}
                         />
                       </td>
                       <td className="verification-header__title">
@@ -260,21 +273,21 @@ export default function VerificationView({ tokenData, tokenId }) {
                     <div className="d-flex flex-row align-items-center">
                       <div className="p-2">
                         <div className="mainFooter__topNavLogo px-3">
-                          <a href="https://mlsd.gov.sa/" target="_blank" rel="noopener noreferrer">
+                          <a href={data.footerMlsdUrl || "https://mlsd.gov.sa/"} target="_blank" rel="noopener noreferrer">
                             <img src="/dist/img/mlsd-logo.png" alt="MLSD" height="50" />
                           </a>
                         </div>
                       </div>
                       <div className="p-2">
                         <div className="mainFooter__topNavLogo px-3">
-                          <a href="https://takamolholding.com/" target="_blank" rel="noopener noreferrer">
+                          <a href={data.footerTakamolUrl || "https://takamolholding.com/"} target="_blank" rel="noopener noreferrer">
                             <img src="/dist/img/takamol-logo.png" alt="Takamol" height="50" />
                           </a>
                         </div>
                       </div>
                       <div className="p-2 footer-border-desktop">
                         <div className="mainFooter__topNavLogo px-3">
-                          <a href="https://tamkeentech.sa/" target="_blank" rel="noopener noreferrer">
+                          <a href={data.footerTamkeenUrl || "https://tamkeentech.sa/"} target="_blank" rel="noopener noreferrer">
                             <img src="/dist/img/tamkeen-logo-1.svg" alt="Tamkeen" height="50" />
                           </a>
                         </div>
@@ -282,13 +295,13 @@ export default function VerificationView({ tokenData, tokenId }) {
                       <div className="p-2">
                         <div className="mainFooter__topNavLogo px-1">
                           <a
-                            href="https://raqmi.dga.gov.sa/platforms/DigitalStamp/ShowCertificate/441"
+                            href={data.footerDigitalStampUrl || "https://raqmi.dga.gov.sa/platforms/DigitalStamp/ShowCertificate/441"}
                             target="_blank"
                             rel="noopener noreferrer"
                           >
                             <img
                               src="/dist/img/digital-govt-auth-logo.svg"
-                              alt="Tamkeen"
+                              alt="Digital Stamp"
                               className="footer-stamp-logo"
                             />
                           </a>
@@ -302,17 +315,17 @@ export default function VerificationView({ tokenData, tokenId }) {
                     <div className="d-flex flex-row justify-content-center align-items-center">
                       <div className="p-2 footer-border-mobile">
                         <div className="mainFooter__topNavLogo px-3">
-                          <a href="https://mlsd.gov.sa/" target="_blank" rel="noopener noreferrer">
+                          <a href={data.footerMlsdUrl || "https://mlsd.gov.sa/"} target="_blank" rel="noopener noreferrer">
                             <img src="/dist/img/mlsd-logo.png" alt="MLSD" height="50" />
                           </a>
                         </div>
                         <div className="mainFooter__topNavLogo px-3">
-                          <a href="https://takamolholding.com/" target="_blank" rel="noopener noreferrer">
+                          <a href={data.footerTakamolUrl || "https://takamolholding.com/"} target="_blank" rel="noopener noreferrer">
                             <img src="/dist/img/takamol-logo.png" alt="Takamol" height="50" />
                           </a>
                         </div>
                         <div className="mainFooter__topNavLogo px-3">
-                          <a href="https://tamkeentech.sa/" target="_blank" rel="noopener noreferrer">
+                          <a href={data.footerTamkeenUrl || "https://tamkeentech.sa/"} target="_blank" rel="noopener noreferrer">
                             <img src="/dist/img/tamkeen-logo-1.svg" alt="Tamkeen" height="50" />
                           </a>
                         </div>
@@ -321,13 +334,13 @@ export default function VerificationView({ tokenData, tokenId }) {
                         <div className="p-2">
                           <div className="mainFooter__topNavLogo px-1">
                             <a
-                              href="https://raqmi.dga.gov.sa/platforms/DigitalStamp/ShowCertificate/441"
+                              href={data.footerDigitalStampUrl || "https://raqmi.dga.gov.sa/platforms/DigitalStamp/ShowCertificate/441"}
                               target="_blank"
                               rel="noopener noreferrer"
                             >
                               <img
                                 src="/dist/img/digital-govt-auth-logo.svg"
-                                alt="Tamkeen"
+                                alt="Digital Stamp"
                                 className="footer-stamp-logo"
                               />
                             </a>
