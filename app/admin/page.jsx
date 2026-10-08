@@ -4,19 +4,22 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { saveNoticeToFirestore, fetchNoticeFromFirestore, fetchLinksHistory } from '../../lib/firestoreService';
 import { DEFAULT_NOTICE_DATA } from '../../lib/defaultData';
-import { generateNoticeToken } from '../../lib/tokenGenerator';
 import '../../public/dist/css/admin.css';
 
 export default function AdminPage() {
+  const [mounted, setMounted] = useState(false);
   const [formData, setFormData] = useState({ ...DEFAULT_NOTICE_DATA });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
-  const [showPreview, setShowPreview] = useState(true);
-  const [activeTab, setActiveTab] = useState('permit'); // 'permit' | 'worker' | 'facility' | 'labels' | 'footer' | 'history'
+  const [activeTab, setActiveTab] = useState('form'); // 'form' | 'history'
   const [generatedLink, setGeneratedLink] = useState(null);
   const [copied, setCopied] = useState(false);
   const [historyList, setHistoryList] = useState([]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fetch initial data & links history from Firestore on mount
   useEffect(() => {
@@ -28,12 +31,12 @@ export default function AdminPage() {
         ]);
 
         if (firestoreData) {
-          setFormData({ ...DEFAULT_NOTICE_DATA, ...firestoreData });
+          setFormData((prev) => ({ ...prev, ...firestoreData }));
         } else {
           const res = await fetch('/api/notice');
           const json = await res.json();
           if (json.success && json.data) {
-            setFormData({ ...DEFAULT_NOTICE_DATA, ...json.data });
+            setFormData((prev) => ({ ...prev, ...json.data }));
           }
         }
 
@@ -95,6 +98,7 @@ export default function AdminPage() {
         workerName: formData.workerName,
         facilityName: formData.facilityName,
         statusText: formData.statusText,
+        isValid: formData.isValid,
         createdAt: new Date().toISOString(),
       };
 
@@ -110,9 +114,9 @@ export default function AdminPage() {
         });
       } catch (err) {}
 
-      showToast('✓ تم الحفظ في Firebase Firestore بنجاح، وتم إنشاء رابط التحقق المخصص الجديد!', 'success');
+      showToast('✓ تم حفظ التصريح بنجاح وتوليد الرابط المخصص الجديد!', 'success');
     } catch (err) {
-      showToast('حدث خطأ أثناء الحفظ في Firebase: ' + err.message, 'error');
+      showToast('حدث خطأ أثناء الحفظ: ' + err.message, 'error');
     } finally {
       setSaving(false);
     }
@@ -130,7 +134,7 @@ export default function AdminPage() {
   };
 
   const handleReset = async () => {
-    if (!window.confirm('هل أنت متأكد من استعادة جميع النصوص والبيانات الأصلية؟')) {
+    if (!window.confirm('هل أنت متأكد من استعادة البيانات الأصلية للتصريح؟')) {
       return;
     }
     setSaving(true);
@@ -139,7 +143,7 @@ export default function AdminPage() {
       await saveNoticeToFirestore(DEFAULT_NOTICE_DATA);
       await fetch('/api/notice', { method: 'DELETE' });
       setGeneratedLink(null);
-      showToast('↺ تمت استعادة جميع النصوص الأصلية وحفظها في Firebase بنجاح!', 'success');
+      showToast('↺ تمت استعادة البيانات الأصلية بنجاح!', 'success');
     } catch (err) {
       showToast('حدث خطأ أثناء الاستعادة', 'error');
     } finally {
@@ -151,8 +155,14 @@ export default function AdminPage() {
     setToast({ message, type });
     setTimeout(() => {
       setToast(null);
-    }, 6000);
+    }, 5000);
   };
+
+  if (!mounted) {
+    return (
+      <div className="admin-wrapper" style={{ minHeight: '100vh', background: '#f8fafc' }} suppressHydrationWarning />
+    );
+  }
 
   return (
     <div className="admin-wrapper" dir="rtl">
@@ -172,9 +182,9 @@ export default function AdminPage() {
             <div className="admin-brand-info">
               <h1>
                 <span>لوحة التحكم | إدارة تصاريح أجير</span>
-                <span className="admin-brand-badge">سحابي مباشر</span>
+                <span className="admin-brand-badge">سحابي مباشر ● Firebase</span>
               </h1>
-              <p>تعديل فوري وسلس لجميع نصوص وبيانات التصريح مع حفظ سحابي في Firebase</p>
+              <p>تعديل فوري وسريع لبيانات التصريح مع توليد روابط تحقق رسمية ومحمية</p>
             </div>
           </div>
 
@@ -196,65 +206,28 @@ export default function AdminPage() {
               disabled={saving || loading}
               className="admin-btn admin-btn-primary"
             >
-              {saving ? <span>جارٍ الحفظ في Firebase...</span> : <span>حفظ وإنشاء رابط جديد ⚡</span>}
+              {saving ? <span>جارٍ الحفظ...</span> : <span>حفظ وتوليد الرابط ⚡</span>}
             </button>
           </div>
         </div>
       </header>
 
-      {/* Main Content Form */}
+      {/* Main Container */}
       <main className="admin-container">
         {loading ? (
           <div style={{ textAlign: 'center', padding: '80px 0', fontSize: '18px', color: '#64748b', fontWeight: 600 }}>
-            <div style={{ fontSize: '32px', marginBottom: '12px' }}>⏳</div>
-            جارٍ الاتصال بقاعدة بيانات Firebase وتحميل البيانات...
+            <div style={{ fontSize: '36px', marginBottom: '14px' }}>⏳</div>
+            جارٍ تحميل بيانات التصريح من السحابة...
           </div>
         ) : (
-          <form onSubmit={handleSave}>
-            {/* Top Stats Overview Cards */}
-            <div className="admin-stats-grid">
-              <div className="admin-stat-card">
-                <div className="admin-stat-icon green">📋</div>
-                <div className="admin-stat-details">
-                  <div className="admin-stat-label">رقم التصريح</div>
-                  <div className="admin-stat-value">{formData.noticeNumber || '-'}</div>
-                </div>
-              </div>
-
-              <div className="admin-stat-card">
-                <div className="admin-stat-icon blue">👤</div>
-                <div className="admin-stat-details">
-                  <div className="admin-stat-label">اسم العامل</div>
-                  <div className="admin-stat-value">{formData.workerName || '-'}</div>
-                </div>
-              </div>
-
-              <div className="admin-stat-card">
-                <div className="admin-stat-icon purple">🛡️</div>
-                <div className="admin-stat-details">
-                  <div className="admin-stat-label">حالة التصريح</div>
-                  <div className="admin-stat-value" style={{ color: formData.isValid ? '#16a34a' : '#dc2626' }}>
-                    {formData.statusText || '-'}
-                  </div>
-                </div>
-              </div>
-
-              <div className="admin-stat-card">
-                <div className="admin-stat-icon amber">🔗</div>
-                <div className="admin-stat-details">
-                  <div className="admin-stat-label">الروابط المنشأة</div>
-                  <div className="admin-stat-value">{historyList.length} روابط سحابية</div>
-                </div>
-              </div>
-            </div>
-
+          <div>
             {/* Generated Link Prominent Banner */}
             {generatedLink && (
               <div className="admin-generated-box">
                 <div className="admin-generated-header">
                   <div className="admin-generated-title">
                     <span style={{ fontSize: '22px' }}>⚡</span>
-                    <span>تم حفظ التعديلات في Firebase بنجاح وتوليد رابط جديد للتصريح!</span>
+                    <span>تم إنشاء رابط التحقق المخصص بنجاح!</span>
                     <span className="admin-generated-badge">جاهز للإرسال للعميل</span>
                   </div>
                   <div style={{ display: 'flex', gap: '8px' }}>
@@ -290,7 +263,7 @@ export default function AdminPage() {
                 <div
                   style={{
                     marginTop: '12px',
-                    fontSize: '12.5px',
+                    fontSize: '13px',
                     color: '#166534',
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -300,60 +273,24 @@ export default function AdminPage() {
                   }}
                 >
                   <span>
-                    🛡️ هذا الرابط مخصص ومرتبط مباشرة بـ Firebase. عندما يفتحه أي شخص ستظهر له التعديلات الجديدة فوراً دون أي أخطاء.
+                    رقم التصريح: <strong>{generatedLink.noticeNumber}</strong> | العامل: <strong>{generatedLink.workerName}</strong> | الحالة: <strong>{generatedLink.statusText}</strong>
                   </span>
                   <span>
-                    رقم التصريح: <strong>{generatedLink.noticeNumber}</strong> | العامل: <strong>{generatedLink.workerName}</strong>
+                    ✓ مرتبط مباشرة بسحابة Firebase ومحمي
                   </span>
                 </div>
               </div>
             )}
 
-            {/* Navigation Tabs (Pill Bar) */}
+            {/* Simple Clean Tabs */}
             <div className="admin-tabs-bar">
               <button
                 type="button"
-                onClick={() => setActiveTab('permit')}
-                className={`admin-tab-btn ${activeTab === 'permit' ? 'active' : ''}`}
+                onClick={() => setActiveTab('form')}
+                className={`admin-tab-btn ${activeTab === 'form' ? 'active' : ''}`}
               >
-                <span>📋</span>
-                <span>بيانات التصريح والحالة</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('worker')}
-                className={`admin-tab-btn ${activeTab === 'worker' ? 'active' : ''}`}
-              >
-                <span>👤</span>
-                <span>بيانات العامل</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('facility')}
-                className={`admin-tab-btn ${activeTab === 'facility' ? 'active' : ''}`}
-              >
-                <span>🏢</span>
-                <span>بيانات المنشأة</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('labels')}
-                className={`admin-tab-btn ${activeTab === 'labels' ? 'active' : ''}`}
-              >
-                <span>🏷️</span>
-                <span>عناوين وتسميات الجداول</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('footer')}
-                className={`admin-tab-btn ${activeTab === 'footer' ? 'active' : ''}`}
-              >
-                <span>📑</span>
-                <span>نصوص وروابط التذييل</span>
+                <span>📝</span>
+                <span>تعديل بيانات التصريح</span>
               </button>
 
               <button
@@ -367,134 +304,66 @@ export default function AdminPage() {
               </button>
             </div>
 
-            {/* Content Sections */}
-            <div>
-              {/* TAB 1: Permit & Status */}
-              {activeTab === 'permit' && (
+            {/* TAB 1: Streamlined Form */}
+            {activeTab === 'form' && (
+              <form onSubmit={handleSave}>
+                {/* 1. Status Picker Card */}
                 <section className="admin-card">
                   <div className="admin-card-header">
                     <h2>
                       <span className="admin-card-header-icon">🛡️</span>
-                      حالة التصريح والبيانات الأساسية
+                      حالة التصريح
                     </h2>
                   </div>
                   <div className="admin-card-body">
-                    {/* Status Picker */}
-                    <div style={{ marginBottom: '24px' }}>
-                      <label className="admin-label">
-                        <span>حالة صلاحية التصريح ولون الشارة</span>
-                        <span className="admin-label-hint">تنعكس في التقرير أعلى الصفحة</span>
-                      </label>
-                      <div className="admin-status-picker">
-                        <div
-                          className={`admin-status-option ${formData.isValid ? 'active-valid' : ''}`}
-                          onClick={() => handleStatusToggle(true)}
-                        >
-                          <div className="admin-status-option-content">
-                            <span style={{ fontSize: '20px' }}>🟢</span>
-                            <span>ساري / فعال (صالح ومقبول)</span>
-                          </div>
-                          <input
-                            type="radio"
-                            name="isValid"
-                            checked={formData.isValid === true}
-                            onChange={() => handleStatusToggle(true)}
-                          />
+                    <label className="admin-label">
+                      <span>حدد حالة التصريح (تظهر بشكل بارز في التقرير)</span>
+                    </label>
+                    <div className="admin-status-picker">
+                      <div
+                        className={`admin-status-option ${formData.isValid ? 'active-valid' : ''}`}
+                        onClick={() => handleStatusToggle(true)}
+                      >
+                        <div className="admin-status-option-content">
+                          <span style={{ fontSize: '22px' }}>🟢</span>
+                          <span style={{ fontWeight: 800 }}>ساري / فعال (مقبول ومعتمد)</span>
                         </div>
+                        <input
+                          type="radio"
+                          name="isValid"
+                          checked={formData.isValid === true}
+                          onChange={() => handleStatusToggle(true)}
+                        />
+                      </div>
 
-                        <div
-                          className={`admin-status-option ${!formData.isValid ? 'active-invalid' : ''}`}
-                          onClick={() => handleStatusToggle(false)}
-                        >
-                          <div className="admin-status-option-content">
-                            <span style={{ fontSize: '20px' }}>🔴</span>
-                            <span>منتهي / ملغي (غير صالح)</span>
-                          </div>
-                          <input
-                            type="radio"
-                            name="isValid"
-                            checked={formData.isValid === false}
-                            onChange={() => handleStatusToggle(false)}
-                          />
+                      <div
+                        className={`admin-status-option ${!formData.isValid ? 'active-invalid' : ''}`}
+                        onClick={() => handleStatusToggle(false)}
+                      >
+                        <div className="admin-status-option-content">
+                          <span style={{ fontSize: '22px' }}>🔴</span>
+                          <span style={{ fontWeight: 800 }}>منتهي / ملغي (غير صالح)</span>
                         </div>
+                        <input
+                          type="radio"
+                          name="isValid"
+                          checked={formData.isValid === false}
+                          onChange={() => handleStatusToggle(false)}
+                        />
                       </div>
                     </div>
+                  </div>
+                </section>
 
-                    <div className="admin-form-row">
-                      <div>
-                        <label className="admin-label">
-                          <span>عنوان تبويب المتصفح (Browser Tab Title)</span>
-                          <span className="admin-label-hint">يظهر في شريط المتصفح</span>
-                        </label>
-                        <div className="admin-input-wrap">
-                          <span className="admin-input-icon">🌐</span>
-                          <input
-                            type="text"
-                            name="pageTitle"
-                            value={formData.pageTitle || ''}
-                            onChange={handleChange}
-                            className="admin-input"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="admin-label">
-                          <span>عنوان رأس الصفحة (Header Title)</span>
-                        </label>
-                        <div className="admin-input-wrap">
-                          <span className="admin-input-icon">📑</span>
-                          <input
-                            type="text"
-                            name="headerTitle"
-                            value={formData.headerTitle}
-                            onChange={handleChange}
-                            className="admin-input"
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="admin-form-row">
-                      <div className="admin-form-col-full">
-                        <label className="admin-label">
-                          <span>نص شارة الحالة (Status Text)</span>
-                        </label>
-                        <div className="admin-input-wrap">
-                          <span className="admin-input-icon">🏷️</span>
-                          <input
-                            type="text"
-                            name="statusText"
-                            value={formData.statusText}
-                            onChange={handleChange}
-                            className="admin-input"
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="admin-form-row">
-                      <div className="admin-form-col-full">
-                        <label className="admin-label">
-                          <span>رسالة التحقق الخضراء</span>
-                          <span className="admin-label-hint">السطر التوضيحي أسفل عنوان الصفحة</span>
-                        </label>
-                        <div className="admin-input-wrap">
-                          <span className="admin-input-icon">✓</span>
-                          <input
-                            type="text"
-                            name="verificationMessage"
-                            value={formData.verificationMessage}
-                            onChange={handleChange}
-                            className="admin-input"
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
-
+                {/* 2. Permit Details Card */}
+                <section className="admin-card">
+                  <div className="admin-card-header">
+                    <h2>
+                      <span className="admin-card-header-icon">📋</span>
+                      بيانات التصريح (Notice Details)
+                    </h2>
+                  </div>
+                  <div className="admin-card-body">
                     <div className="admin-form-row">
                       <div>
                         <label className="admin-label">
@@ -506,7 +375,7 @@ export default function AdminPage() {
                           <input
                             type="text"
                             name="noticeNumber"
-                            value={formData.noticeNumber}
+                            value={formData.noticeNumber || ''}
                             onChange={handleChange}
                             className="admin-input"
                             required
@@ -524,7 +393,7 @@ export default function AdminPage() {
                           <input
                             type="text"
                             name="noticeType"
-                            value={formData.noticeType}
+                            value={formData.noticeType || ''}
                             onChange={handleChange}
                             className="admin-input"
                             required
@@ -543,7 +412,7 @@ export default function AdminPage() {
                           <input
                             type="date"
                             name="startDate"
-                            value={formData.startDate}
+                            value={formData.startDate || ''}
                             onChange={handleChange}
                             className="admin-input"
                             required
@@ -560,7 +429,7 @@ export default function AdminPage() {
                           <input
                             type="date"
                             name="endDate"
-                            value={formData.endDate}
+                            value={formData.endDate || ''}
                             onChange={handleChange}
                             className="admin-input"
                             required
@@ -570,10 +439,8 @@ export default function AdminPage() {
                     </div>
                   </div>
                 </section>
-              )}
 
-              {/* TAB 2: Worker Details */}
-              {activeTab === 'worker' && (
+                {/* 3. Worker Details Card */}
                 <section className="admin-card">
                   <div className="admin-card-header">
                     <h2>
@@ -593,7 +460,7 @@ export default function AdminPage() {
                           <input
                             type="text"
                             name="workerName"
-                            value={formData.workerName}
+                            value={formData.workerName || ''}
                             onChange={handleChange}
                             className="admin-input"
                             required
@@ -613,7 +480,7 @@ export default function AdminPage() {
                           <input
                             type="text"
                             name="iqamaNumber"
-                            value={formData.iqamaNumber}
+                            value={formData.iqamaNumber || ''}
                             onChange={handleChange}
                             className="admin-input"
                             required
@@ -630,7 +497,7 @@ export default function AdminPage() {
                           <input
                             type="text"
                             name="nationality"
-                            value={formData.nationality}
+                            value={formData.nationality || ''}
                             onChange={handleChange}
                             className="admin-input"
                             required
@@ -649,7 +516,7 @@ export default function AdminPage() {
                           <input
                             type="text"
                             name="occupation"
-                            value={formData.occupation}
+                            value={formData.occupation || ''}
                             onChange={handleChange}
                             className="admin-input"
                             required
@@ -666,7 +533,7 @@ export default function AdminPage() {
                           <input
                             type="text"
                             name="gender"
-                            value={formData.gender}
+                            value={formData.gender || ''}
                             onChange={handleChange}
                             className="admin-input"
                             required
@@ -685,7 +552,7 @@ export default function AdminPage() {
                           <input
                             type="text"
                             name="birthDate"
-                            value={formData.birthDate}
+                            value={formData.birthDate || ''}
                             onChange={handleChange}
                             className="admin-input"
                             required
@@ -695,10 +562,8 @@ export default function AdminPage() {
                     </div>
                   </div>
                 </section>
-              )}
 
-              {/* TAB 3: Facility Details */}
-              {activeTab === 'facility' && (
+                {/* 4. Facility Details Card */}
                 <section className="admin-card">
                   <div className="admin-card-header">
                     <h2>
@@ -718,7 +583,7 @@ export default function AdminPage() {
                           <input
                             type="text"
                             name="facilityNumber"
-                            value={formData.facilityNumber}
+                            value={formData.facilityNumber || ''}
                             onChange={handleChange}
                             className="admin-input"
                             required
@@ -735,7 +600,7 @@ export default function AdminPage() {
                           <input
                             type="text"
                             name="facilityName"
-                            value={formData.facilityName}
+                            value={formData.facilityName || ''}
                             onChange={handleChange}
                             className="admin-input"
                             required
@@ -745,572 +610,113 @@ export default function AdminPage() {
                     </div>
                   </div>
                 </section>
-              )}
 
-              {/* TAB 4: Labels & Section Titles */}
-              {activeTab === 'labels' && (
-                <section className="admin-card">
-                  <div className="admin-card-header">
-                    <h2>
-                      <span className="admin-card-header-icon">🏷️</span>
-                      تعديل عناوين وتسميات الجداول الثابتة
-                    </h2>
-                  </div>
-                  <div className="admin-card-body">
-                    <div style={{ marginBottom: '20px' }}>
-                      <h3 style={{ fontSize: '15px', color: '#1f6f55', fontWeight: 800, marginBottom: '14px' }}>
-                        1. عناوين وتسميات جدول التصريح
-                      </h3>
-                      <div className="admin-form-row">
-                        <div>
-                          <label className="admin-label">عنوان القسم الأول</label>
-                          <input
-                            type="text"
-                            name="section1Title"
-                            value={formData.section1Title}
-                            onChange={handleChange}
-                            className="admin-input no-icon"
-                          />
-                        </div>
-                        <div>
-                          <label className="admin-label">تسمية "رقم التصريح"</label>
-                          <input
-                            type="text"
-                            name="noticeNumberLabel"
-                            value={formData.noticeNumberLabel}
-                            onChange={handleChange}
-                            className="admin-input no-icon"
-                          />
-                        </div>
-                      </div>
-                      <div className="admin-form-row">
-                        <div>
-                          <label className="admin-label">تسمية "نوع التصريح"</label>
-                          <input
-                            type="text"
-                            name="noticeTypeLabel"
-                            value={formData.noticeTypeLabel}
-                            onChange={handleChange}
-                            className="admin-input no-icon"
-                          />
-                        </div>
-                        <div>
-                          <label className="admin-label">تسمية "تاريخ بداية التصريح"</label>
-                          <input
-                            type="text"
-                            name="startDateLabel"
-                            value={formData.startDateLabel}
-                            onChange={handleChange}
-                            className="admin-input no-icon"
-                          />
-                        </div>
-                      </div>
-                      <div className="admin-form-row">
-                        <div>
-                          <label className="admin-label">تسمية "تاريخ نهاية التصريح"</label>
-                          <input
-                            type="text"
-                            name="endDateLabel"
-                            value={formData.endDateLabel}
-                            onChange={handleChange}
-                            className="admin-input no-icon"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ marginBottom: '20px', borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
-                      <h3 style={{ fontSize: '15px', color: '#1f6f55', fontWeight: 800, marginBottom: '14px' }}>
-                        2. عناوين وتسميات جدول العامل
-                      </h3>
-                      <div className="admin-form-row">
-                        <div>
-                          <label className="admin-label">عنوان القسم الثاني</label>
-                          <input
-                            type="text"
-                            name="section2Title"
-                            value={formData.section2Title}
-                            onChange={handleChange}
-                            className="admin-input no-icon"
-                          />
-                        </div>
-                        <div>
-                          <label className="admin-label">تسمية "اسم العامل"</label>
-                          <input
-                            type="text"
-                            name="workerNameLabel"
-                            value={formData.workerNameLabel}
-                            onChange={handleChange}
-                            className="admin-input no-icon"
-                          />
-                        </div>
-                      </div>
-                      <div className="admin-form-row">
-                        <div>
-                          <label className="admin-label">تسمية "رقم الهوية / الإقامة"</label>
-                          <input
-                            type="text"
-                            name="iqamaNumberLabel"
-                            value={formData.iqamaNumberLabel}
-                            onChange={handleChange}
-                            className="admin-input no-icon"
-                          />
-                        </div>
-                        <div>
-                          <label className="admin-label">تسمية "الجنسية"</label>
-                          <input
-                            type="text"
-                            name="nationalityLabel"
-                            value={formData.nationalityLabel}
-                            onChange={handleChange}
-                            className="admin-input no-icon"
-                          />
-                        </div>
-                      </div>
-                      <div className="admin-form-row">
-                        <div>
-                          <label className="admin-label">تسمية "المهنة"</label>
-                          <input
-                            type="text"
-                            name="occupationLabel"
-                            value={formData.occupationLabel}
-                            onChange={handleChange}
-                            className="admin-input no-icon"
-                          />
-                        </div>
-                        <div>
-                          <label className="admin-label">تسمية "الجنس"</label>
-                          <input
-                            type="text"
-                            name="genderLabel"
-                            value={formData.genderLabel}
-                            onChange={handleChange}
-                            className="admin-input no-icon"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
-                      <h3 style={{ fontSize: '15px', color: '#1f6f55', fontWeight: 800, marginBottom: '14px' }}>
-                        3. عناوين جدول المنشأة
-                      </h3>
-                      <div className="admin-form-row">
-                        <div>
-                          <label className="admin-label">عنوان القسم الثالث</label>
-                          <input
-                            type="text"
-                            name="section3Title"
-                            value={formData.section3Title}
-                            onChange={handleChange}
-                            className="admin-input no-icon"
-                          />
-                        </div>
-                        <div>
-                          <label className="admin-label">تسمية "رقم المنشأة"</label>
-                          <input
-                            type="text"
-                            name="facilityNumberLabel"
-                            value={formData.facilityNumberLabel}
-                            onChange={handleChange}
-                            className="admin-input no-icon"
-                          />
-                        </div>
-                      </div>
-                      <div className="admin-form-row">
-                        <div>
-                          <label className="admin-label">تسمية "اسم المنشأة"</label>
-                          <input
-                            type="text"
-                            name="facilityNameLabel"
-                            value={formData.facilityNameLabel}
-                            onChange={handleChange}
-                            className="admin-input no-icon"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              )}
-
-              {/* TAB 5: Footer & Links */}
-              {activeTab === 'footer' && (
-                <section className="admin-card">
-                  <div className="admin-card-header">
-                    <h2>
-                      <span className="admin-card-header-icon">📑</span>
-                      نصوص وروابط تذييل الصفحة (Footer)
-                    </h2>
-                  </div>
-                  <div className="admin-card-body">
-                    <div className="admin-form-row">
-                      <div>
-                        <label className="admin-label">بريد الدعم والمساعدة</label>
-                        <input
-                          type="text"
-                          name="footerSupportEmail"
-                          value={formData.footerSupportEmail}
-                          onChange={handleChange}
-                          className="admin-input no-icon"
-                        />
-                      </div>
-                      <div>
-                        <label className="admin-label">رقم هاتف الدعم</label>
-                        <input
-                          type="text"
-                          name="footerSupportPhone"
-                          value={formData.footerSupportPhone}
-                          onChange={handleChange}
-                          className="admin-input no-icon"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="admin-form-row">
-                      <div className="admin-form-col-full">
-                        <label className="admin-label">رابط منصة X (تويتر)</label>
-                        <input
-                          type="text"
-                          name="footerTwitterUrl"
-                          value={formData.footerTwitterUrl}
-                          onChange={handleChange}
-                          className="admin-input no-icon"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="admin-form-row">
-                      <div>
-                        <label className="admin-label">عنوان العمود 1</label>
-                        <input
-                          type="text"
-                          name="footerCol1Title"
-                          value={formData.footerCol1Title}
-                          onChange={handleChange}
-                          className="admin-input no-icon"
-                        />
-                      </div>
-                      <div>
-                        <label className="admin-label">عنوان العمود 2</label>
-                        <input
-                          type="text"
-                          name="footerCol2Title"
-                          value={formData.footerCol2Title}
-                          onChange={handleChange}
-                          className="admin-input no-icon"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="admin-form-row">
-                      <div>
-                        <label className="admin-label">عنوان العمود 3</label>
-                        <input
-                          type="text"
-                          name="footerCol3Title"
-                          value={formData.footerCol3Title}
-                          onChange={handleChange}
-                          className="admin-input no-icon"
-                        />
-                      </div>
-                      <div>
-                        <label className="admin-label">عنوان العمود 4</label>
-                        <input
-                          type="text"
-                          name="footerCol4Title"
-                          value={formData.footerCol4Title}
-                          onChange={handleChange}
-                          className="admin-input no-icon"
-                        />
-                      </div>
-                    </div>
-
-                    <div style={{ marginTop: '20px', borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
-                      <h3 style={{ fontSize: '15px', color: '#1f6f55', fontWeight: 800, marginBottom: '14px' }}>
-                        روابط الجهات الرسمية في الفوتر (Government Partner Links)
-                      </h3>
-                      <div className="admin-form-row">
-                        <div>
-                          <label className="admin-label">رابط وزارة الموارد البشرية</label>
-                          <input
-                            type="text"
-                            name="footerMlsdUrl"
-                            value={formData.footerMlsdUrl || ''}
-                            onChange={handleChange}
-                            className="admin-input no-icon"
-                          />
-                        </div>
-                        <div>
-                          <label className="admin-label">رابط شركة تكامل القابضة</label>
-                          <input
-                            type="text"
-                            name="footerTakamolUrl"
-                            value={formData.footerTakamolUrl || ''}
-                            onChange={handleChange}
-                            className="admin-input no-icon"
-                          />
-                        </div>
-                      </div>
-                      <div className="admin-form-row">
-                        <div>
-                          <label className="admin-label">رابط تمكين للتقنيات</label>
-                          <input
-                            type="text"
-                            name="footerTamkeenUrl"
-                            value={formData.footerTamkeenUrl || ''}
-                            onChange={handleChange}
-                            className="admin-input no-icon"
-                          />
-                        </div>
-                        <div>
-                          <label className="admin-label">رابط ختم هيئة الحكومة الرقمية</label>
-                          <input
-                            type="text"
-                            name="footerDigitalStampUrl"
-                            value={formData.footerDigitalStampUrl || ''}
-                            onChange={handleChange}
-                            className="admin-input no-icon"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              )}
-
-              {/* TAB 6: History of Generated Links */}
-              {activeTab === 'history' && (
-                <section className="admin-card">
-                  <div className="admin-card-header">
-                    <h2>
-                      <span className="admin-card-header-icon">🔗</span>
-                      سجل الروابط المنشأة سحابياً في Firebase ({historyList.length})
-                    </h2>
-                  </div>
-                  <div className="admin-card-body">
-                    <p style={{ fontSize: '13.5px', color: '#64748b', marginBottom: '16px', fontWeight: 500 }}>
-                      كل تعديل تقوم بحفظه يتم تخزينه في Firebase Firestore ويتم توليد رابط تحقق مخصص ومحمي له. يمكنك نسخ أي رابط أو معاينته مباشرة:
-                    </p>
-                    {historyList.length === 0 ? (
-                      <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', background: '#f8fafc', borderRadius: '12px' }}>
-                        <div style={{ fontSize: '28px', marginBottom: '8px' }}>📭</div>
-                        لم يتم إنشاء روابط بعد. قم بتعديل أي بيانات واضغط "حفظ وإنشاء رابط جديد ⚡" لإنشاء أول رابط مخصص.
-                      </div>
-                    ) : (
-                      <div style={{ overflowX: 'auto' }}>
-                        <table className="admin-history-table">
-                          <thead>
-                            <tr>
-                              <th>رقم التصريح</th>
-                              <th>اسم العامل</th>
-                              <th>اسم المنشأة</th>
-                              <th>وقت الإنشاء</th>
-                              <th>الإجراءات السريعة</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {historyList.map((item, idx) => {
-                              const origin = typeof window !== 'undefined' ? window.location.origin : '';
-                              const itemUrl = item.url || `${origin}/notice-verification/${item.token}`;
-                              return (
-                                <tr key={item.token || idx}>
-                                  <td><strong>{item.noticeNumber || '-'}</strong></td>
-                                  <td>{item.workerName || '-'}</td>
-                                  <td>{item.facilityName || '-'}</td>
-                                  <td style={{ fontSize: '12px', color: '#64748b', whiteSpace: 'nowrap' }}>
-                                    {item.createdAt ? new Date(item.createdAt).toLocaleString('ar-SA') : '-'}
-                                  </td>
-                                  <td>
-                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleCopyLink(itemUrl)}
-                                        className="admin-btn admin-btn-outline"
-                                        style={{ padding: '6px 12px', fontSize: '12px' }}
-                                      >
-                                        نسخ الرابط 📋
-                                      </button>
-                                      <a
-                                        href={itemUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="admin-btn admin-btn-outline"
-                                        style={{ padding: '6px 12px', fontSize: '12px' }}
-                                      >
-                                        معاينة ↗
-                                      </a>
-                                    </div>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-                </section>
-              )}
-
-              {/* Real-time Live Preview Section */}
-              <section className="admin-card">
-                <div className="admin-card-header">
-                  <h2>
-                    <span className="admin-card-header-icon">👁️</span>
-                    المعاينة الحية الفورية (Live Preview)
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={() => setShowPreview(!showPreview)}
-                    className="admin-btn admin-btn-outline"
-                    style={{ padding: '6px 14px', fontSize: '13px' }}
-                  >
-                    {showPreview ? 'إخفاء المعاينة ✕' : 'عرض المعاينة 👁️'}
-                  </button>
-                </div>
-                {showPreview && (
-                  <div className="admin-card-body" style={{ background: '#f7f8f7', padding: '24px' }}>
-                    <div className="verification-document" id="verification-content" style={{ margin: '0 auto' }}>
-                      <table className="verification-header" dir="rtl">
-                        <tbody>
-                          <tr>
-                            <td className="verification-header__logos">
-                              <img
-                                className="verification-logo verification-logo--ajeer"
-                                src="/dist/img/ajeer-logo.png"
-                                alt="أجير"
-                              />
-                              <img
-                                className="verification-logo verification-logo--hrsd"
-                                src="/dist/img/mlsd-logo.png"
-                                alt="وزارة الموارد البشرية والتنمية الاجتماعية"
-                              />
-                            </td>
-                            <td className="verification-header__title">
-                              <h1 className="verification-title">{formData.headerTitle}</h1>
-                            </td>
-                            <td className="verification-header__result">
-                              <strong
-                                className={`verification-result ${
-                                  formData.isValid ? 'verification-result--valid' : 'verification-result--invalid'
-                                }`}
-                              >
-                                {formData.statusText}
-                              </strong>
-                            </td>
-                          </tr>
-                          <tr className="verification-header__message">
-                            <td colSpan="3">
-                              <p className="verification-notice">{formData.verificationMessage}</p>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-
-                      {/* Preview Table 1 */}
-                      <table className="verification-table" dir="rtl">
-                        <tbody>
-                          <tr className="verification-table__section">
-                            <th colSpan="4">{formData.section1Title}</th>
-                          </tr>
-                          <tr>
-                            <th className="verification-table__label">{formData.noticeNumberLabel}</th>
-                            <td className="verification-table__value">{formData.noticeNumber}</td>
-                            <th className="verification-table__label">{formData.noticeTypeLabel}</th>
-                            <td className="verification-table__value">{formData.noticeType}</td>
-                          </tr>
-                          <tr>
-                            <th className="verification-table__label">{formData.startDateLabel}</th>
-                            <td className="verification-table__value">{formData.startDate}</td>
-                            <th className="verification-table__label">{formData.endDateLabel}</th>
-                            <td className="verification-table__value">{formData.endDate}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-
-                      {/* Preview Table 2 */}
-                      <table className="verification-table" dir="rtl">
-                        <tbody>
-                          <tr className="verification-table__section">
-                            <th colSpan="4">{formData.section2Title}</th>
-                          </tr>
-                          <tr>
-                            <th className="verification-table__label">{formData.workerNameLabel}</th>
-                            <td className="verification-table__value">{formData.workerName}</td>
-                            <th className="verification-table__label">{formData.iqamaNumberLabel}</th>
-                            <td className="verification-table__value">{formData.iqamaNumber}</td>
-                          </tr>
-                          <tr>
-                            <th className="verification-table__label">{formData.nationalityLabel}</th>
-                            <td className="verification-table__value">{formData.nationality}</td>
-                            <th className="verification-table__label">{formData.occupationLabel}</th>
-                            <td className="verification-table__value">{formData.occupation}</td>
-                          </tr>
-                          <tr>
-                            <th className="verification-table__label">{formData.genderLabel}</th>
-                            <td className="verification-table__value">{formData.gender}</td>
-                            <th className="verification-table__label">{formData.birthDateLabel}</th>
-                            <td className="verification-table__value">{formData.birthDate}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-
-                      {/* Preview Table 3 */}
-                      <table className="verification-table" dir="rtl">
-                        <tbody>
-                          <tr className="verification-table__section">
-                            <th colSpan="4">{formData.section3Title}</th>
-                          </tr>
-                          <tr>
-                            <th className="verification-table__label">{formData.facilityNumberLabel}</th>
-                            <td className="verification-table__value">{formData.facilityNumber}</td>
-                            <th className="verification-table__label">{formData.facilityNameLabel}</th>
-                            <td className="verification-table__value">{formData.facilityName}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-              </section>
-            </div>
-
-            {/* Sticky Action Bar */}
-            <div className="admin-sticky-bar">
-              <div className="admin-sticky-bar-inner">
-                <div className="admin-sticky-status">
-                  <div className="admin-status-indicator" />
-                  <span>
-                    متصل سحابياً بـ Firebase Firestore | يتم توليد الرابط المخصص للعميل فوراً دون أي أخطاء.
-                  </span>
-                </div>
-                <div className="admin-nav-actions">
-                  {generatedLink && (
-                    <button
-                      type="button"
-                      onClick={() => handleCopyLink(generatedLink.url)}
-                      className={`admin-btn ${copied ? 'admin-btn-primary' : 'admin-btn-outline'}`}
-                      style={{ borderColor: '#22c55e' }}
-                    >
-                      {copied ? <span>تم النسخ ✓</span> : <span>نسخ الرابط الأخير 📋</span>}
-                    </button>
-                  )}
-                  <Link href="/" target="_blank" className="admin-btn admin-btn-outline">
-                    <span>فتح الصفحة الرئيسية ↗</span>
-                  </Link>
+                {/* Bottom Primary Action */}
+                <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center' }}>
                   <button
                     type="submit"
                     disabled={saving || loading}
                     className="admin-btn admin-btn-primary"
-                    style={{ minWidth: '240px' }}
+                    style={{ minWidth: '320px', padding: '14px 28px', fontSize: '16px', borderRadius: '12px' }}
                   >
-                    {saving ? <span>جارٍ الحفظ في Firebase...</span> : <span>حفظ وإنشاء رابط جديد ⚡</span>}
+                    {saving ? <span>جارٍ الحفظ في Firebase...</span> : <span>حفظ التعديلات وإنشاء رابط جديد ⚡</span>}
                   </button>
                 </div>
-              </div>
-            </div>
-          </form>
+              </form>
+            )}
+
+            {/* TAB 2: Links History */}
+            {activeTab === 'history' && (
+              <section className="admin-card">
+                <div className="admin-card-header">
+                  <h2>
+                    <span className="admin-card-header-icon">🔗</span>
+                    سجل الروابط المنشأة سحابياً ({historyList.length})
+                  </h2>
+                </div>
+                <div className="admin-card-body">
+                  <p style={{ fontSize: '13.5px', color: '#64748b', marginBottom: '16px', fontWeight: 500 }}>
+                    كل تعديل تقوم بحفظه يتم تخزينه سحابياً في Firebase مع توليد رابط مخصص له. يمكنك نسخ أي رابط أو فتحه مباشرة:
+                  </p>
+                  {historyList.length === 0 ? (
+                    <div style={{ padding: '48px', textAlign: 'center', color: '#94a3b8', background: '#f8fafc', borderRadius: '12px' }}>
+                      <div style={{ fontSize: '32px', marginBottom: '8px' }}>📭</div>
+                      لا توجد روابط منشأة بعد. قم بتعديل بيانات التصريح واضغط "حفظ وإنشاء رابط جديد" لإنشاء أول رابط.
+                    </div>
+                  ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table className="admin-history-table">
+                        <thead>
+                          <tr>
+                            <th>رقم التصريح</th>
+                            <th>اسم العامل</th>
+                            <th>اسم المنشأة</th>
+                            <th>الحالة</th>
+                            <th>وقت الإنشاء</th>
+                            <th>الإجراءات السريعة</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {historyList.map((item, idx) => {
+                            const origin = typeof window !== 'undefined' ? window.location.origin : '';
+                            const itemUrl = item.url || `${origin}/notice-verification/${item.token}`;
+                            const isValid = item.isValid !== false && item.statusText?.includes('ساري');
+
+                            return (
+                              <tr key={item.token || idx}>
+                                <td><strong>{item.noticeNumber || '-'}</strong></td>
+                                <td>{item.workerName || '-'}</td>
+                                <td>{item.facilityName || '-'}</td>
+                                <td>
+                                  <span
+                                    style={{
+                                      display: 'inline-block',
+                                      padding: '3px 10px',
+                                      borderRadius: '16px',
+                                      fontSize: '12px',
+                                      fontWeight: 700,
+                                      background: isValid ? '#dcfce7' : '#fee2e2',
+                                      color: isValid ? '#15803d' : '#b91c1c',
+                                    }}
+                                  >
+                                    {item.statusText || (isValid ? 'ساري' : 'ملغي')}
+                                  </span>
+                                </td>
+                                <td style={{ fontSize: '12px', color: '#64748b', whiteSpace: 'nowrap' }}>
+                                  {item.createdAt ? new Date(item.createdAt).toLocaleString('ar-SA') : '-'}
+                                </td>
+                                <td>
+                                  <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleCopyLink(itemUrl)}
+                                      className="admin-btn admin-btn-outline"
+                                      style={{ padding: '6px 12px', fontSize: '12px' }}
+                                    >
+                                      نسخ الرابط 📋
+                                    </button>
+                                    <a
+                                      href={itemUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="admin-btn admin-btn-outline"
+                                      style={{ padding: '6px 12px', fontSize: '12px' }}
+                                    >
+                                      معاينة ↗
+                                    </a>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+          </div>
         )}
       </main>
     </div>

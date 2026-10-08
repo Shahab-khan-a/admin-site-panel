@@ -5,10 +5,15 @@ import { subscribeToNotice } from '../lib/firestoreService';
 import { DEFAULT_NOTICE_DATA } from '../lib/defaultData';
 
 export default function VerificationView({ tokenData, tokenId }) {
+  const [mounted, setMounted] = useState(false);
   const [data, setData] = useState({
     ...DEFAULT_NOTICE_DATA,
     ...tokenData
   });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Dynamically update document title from Firebase
   useEffect(() => {
@@ -36,6 +41,12 @@ export default function VerificationView({ tokenData, tokenId }) {
       }
     };
   }, [tokenId]);
+
+  if (!mounted) {
+    return (
+      <div className="qiwa-ajeer-app" style={{ minHeight: '100vh', background: '#f5f7f9' }} suppressHydrationWarning />
+    );
+  }
 
   return (
     <div className="qiwa-ajeer-app" suppressHydrationWarning>

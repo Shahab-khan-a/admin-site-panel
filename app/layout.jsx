@@ -28,6 +28,42 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                // Intercept console.error to silence false-positive extension hydration errors
+                var _origError = console.error;
+                console.error = function() {
+                  var str = "";
+                  for (var i = 0; i < arguments.length; i++) {
+                    var a = arguments[i];
+                    str += (a && a.message ? a.message : String(a)) + " ";
+                  }
+                  if (str.indexOf("bis_skin_checked") !== -1 || (str.indexOf("hydrated") !== -1 && str.indexOf("didn't match") !== -1)) {
+                    return; // Silently ignore extension hydration warnings
+                  }
+                  _origError.apply(console, arguments);
+                };
+
+                // Strip bis_skin_checked attribute before React hydrates
+                if (typeof MutationObserver !== "undefined") {
+                  var observer = new MutationObserver(function(mutations) {
+                    for (var i = 0; i < mutations.length; i++) {
+                      var m = mutations[i];
+                      if (m.type === "attributes" && m.attributeName === "bis_skin_checked") {
+                        m.target.removeAttribute("bis_skin_checked");
+                      }
+                    }
+                  });
+                  observer.observe(document.documentElement, { attributes: true, subtree: true, attributeFilter: ["bis_skin_checked"] });
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
       <body suppressHydrationWarning>
         {children}
       </body>
