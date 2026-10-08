@@ -2,41 +2,33 @@
 
 import React, { useState, useEffect } from 'react';
 import { subscribeToNotice } from '../lib/firestoreService';
+import { DEFAULT_NOTICE_DATA } from '../lib/defaultData';
 
-export default function VerificationView({ tokenData }) {
+export default function VerificationView({ tokenData, tokenId }) {
   const [data, setData] = useState({
-    noticeNumber: tokenData?.noticeNumber || "TW0586633",
-    noticeType: tokenData?.noticeType || "تصريح إعارة أجير",
-    startDate: tokenData?.startDate || "2026-09-27",
-    endDate: tokenData?.endDate || "2026-10-27",
-    workerName: tokenData?.workerName || "SYED ADIL JAN SYED KHALID JAN",
-    iqamaNumber: tokenData?.iqamaNumber || "2573771900",
-    nationality: tokenData?.nationality || "باكستاني",
-    occupation: tokenData?.occupation || "أخصائي صحة وسلامة مهنية",
-    gender: tokenData?.gender || "ذكر",
-    birthDate: tokenData?.birthDate || "-",
-    facilityNumber: tokenData?.facilityNumber || "14-4016821",
-    facilityName: tokenData?.facilityName || "مؤسسة الجسور الممدودة",
-    statusText: tokenData?.statusText || "ساري / فعال",
-    verificationMessage: tokenData?.verificationMessage || "تم التحقق من التصريح بنجاح",
-    isValid: tokenData?.isValid !== false
+    ...DEFAULT_NOTICE_DATA,
+    ...tokenData
   });
 
   // Real-time synchronization with Firebase Firestore
-  // When anyone opens this link on any device in the world, it loads the latest Firebase data!
+  // All static text & data loads directly from Firestore!
   useEffect(() => {
+    const targetDocId = tokenId || 'current';
     const unsubscribe = subscribeToNotice((firestoreData) => {
       if (firestoreData) {
-        setData(firestoreData);
+        setData((prev) => ({
+          ...prev,
+          ...firestoreData
+        }));
       }
-    });
+    }, targetDocId);
 
     return () => {
       if (typeof unsubscribe === 'function') {
         unsubscribe();
       }
     };
-  }, []);
+  }, [tokenId]);
 
   return (
     <div className="qiwa-ajeer-app" suppressHydrationWarning>
@@ -78,7 +70,7 @@ export default function VerificationView({ tokenData }) {
                         />
                       </td>
                       <td className="verification-header__title">
-                        <h1 className="verification-title">التحقق من تصريح أجير</h1>
+                        <h1 className="verification-title">{data.headerTitle}</h1>
                       </td>
                       <td className="verification-header__result">
                         <strong
@@ -94,64 +86,67 @@ export default function VerificationView({ tokenData }) {
                 </table>
 
                 <div className="verification-copy">
-                  <p>{data.verificationMessage || "تم التحقق من التصريح بنجاح"}</p>
+                  <p>{data.verificationMessage}</p>
                 </div>
 
+                {/* Table 1: Notice Details */}
                 <table className="verification-table" dir="rtl">
                   <tbody>
                     <tr className="verification-table__section">
-                      <th colSpan="4">بيانات التصريح</th>
+                      <th colSpan="4">{data.section1Title}</th>
                     </tr>
                     <tr>
-                      <th className="verification-table__label">رقم التصريح</th>
+                      <th className="verification-table__label">{data.noticeNumberLabel}</th>
                       <td className="verification-table__value">{data.noticeNumber}</td>
-                      <th className="verification-table__label">نوع التصريح</th>
+                      <th className="verification-table__label">{data.noticeTypeLabel}</th>
                       <td className="verification-table__value">{data.noticeType}</td>
                     </tr>
                     <tr>
-                      <th className="verification-table__label">تاريخ بداية التصريح</th>
+                      <th className="verification-table__label">{data.startDateLabel}</th>
                       <td className="verification-table__value">{data.startDate}</td>
-                      <th className="verification-table__label">تاريخ نهاية التصريح</th>
+                      <th className="verification-table__label">{data.endDateLabel}</th>
                       <td className="verification-table__value">{data.endDate}</td>
                     </tr>
                   </tbody>
                 </table>
 
+                {/* Table 2: Worker Details */}
                 <table className="verification-table" dir="rtl">
                   <tbody>
                     <tr className="verification-table__section">
-                      <th colSpan="4">بيانات العامل</th>
+                      <th colSpan="4">{data.section2Title}</th>
                     </tr>
                     <tr>
-                      <th className="verification-table__label">اسم العامل</th>
+                      <th className="verification-table__label">{data.workerNameLabel}</th>
                       <td className="verification-table__value">{data.workerName}</td>
-                      <th className="verification-table__label">رقم الهوية / الإقامة</th>
+                      <th className="verification-table__label">{data.iqamaNumberLabel}</th>
                       <td className="verification-table__value">{data.iqamaNumber}</td>
                     </tr>
                     <tr>
-                      <th className="verification-table__label">الجنسية</th>
+                      <th className="verification-table__label">{data.nationalityLabel}</th>
                       <td className="verification-table__value">{data.nationality}</td>
-                      <th className="verification-table__label">المهنة</th>
+                      <th className="verification-table__label">{data.occupationLabel}</th>
                       <td className="verification-table__value">{data.occupation}</td>
                     </tr>
                     <tr>
-                      <th className="verification-table__label">الجنس</th>
+                      <th className="verification-table__label">{data.genderLabel}</th>
                       <td className="verification-table__value">{data.gender}</td>
-                      <th className="verification-table__label">تاريخ الميلاد</th>
+                      <th className="verification-table__label">{data.birthDateLabel}</th>
                       <td className="verification-table__value">{data.birthDate}</td>
                     </tr>
                   </tbody>
                 </table>
 
+                {/* Table 3: Facility Details */}
                 <table className="verification-table" dir="rtl">
                   <tbody>
                     <tr className="verification-table__section">
-                      <th colSpan="4">بيانات المنشأة</th>
+                      <th colSpan="4">{data.section3Title}</th>
                     </tr>
                     <tr>
-                      <th className="verification-table__label">رقم المنشأة</th>
+                      <th className="verification-table__label">{data.facilityNumberLabel}</th>
                       <td className="verification-table__value">{data.facilityNumber}</td>
-                      <th className="verification-table__label">اسم المنشأة</th>
+                      <th className="verification-table__label">{data.facilityNameLabel}</th>
                       <td className="verification-table__value">{data.facilityName}</td>
                     </tr>
                   </tbody>
@@ -168,58 +163,65 @@ export default function VerificationView({ tokenData }) {
             <div className="row">
               <div className="col-12 col-md-12 col-lg-6 px-5 px-lg-0 footer-nav-col">
                 <div className="row footer-nav-row">
+                  {/* Footer Col 1 */}
                   <div className="col-md-3">
                     <div className="mainFooter__topNavTitle mt-5 mt-sm-5 mt-md-0 mt-lg-0 mt-xl-0">
-                      أجير
+                      {data.footerCol1Title}
                     </div>
                     <p>
-                      <a href="/about" className="mainFooter__topNavLink">
-                        عن أجير
+                      <a href={data.footerLink1Url} className="mainFooter__topNavLink">
+                        {data.footerLink1Text}
                       </a>
                     </p>
                     <p>
-                      <a href="/about_notices" className="mainFooter__topNavLink">
-                        خدمات أجير
+                      <a href={data.footerLink2Url} className="mainFooter__topNavLink">
+                        {data.footerLink2Text}
                       </a>
                     </p>
                   </div>
+
+                  {/* Footer Col 2 */}
                   <div className="col-md-3">
                     <div className="mainFooter__topNavTitle mt-5 mt-sm-5 mt-md-0 mt-lg-0 mt-xl-0">
-                      الدعم
+                      {data.footerCol2Title}
                     </div>
                     <p>
-                      <a href="/support" className="mainFooter__topNavLink">
-                        الدعم و المساعدة
+                      <a href={data.footerLink3Url} className="mainFooter__topNavLink">
+                        {data.footerLink3Text}
                       </a>
                     </p>
                     <p>
-                      <a href="/faq" className="mainFooter__topNavLink">
-                        الأسئلة الشائعة
+                      <a href={data.footerLink4Url} className="mainFooter__topNavLink">
+                        {data.footerLink4Text}
                       </a>
                     </p>
                   </div>
+
+                  {/* Footer Col 3 */}
                   <div className="col-md-3">
                     <div className="mainFooter__topNavTitle mt-5 mt-sm-5 mt-md-0 mt-lg-0 mt-xl-0">
-                      الشروط و الخصوصية
+                      {data.footerCol3Title}
                     </div>
                     <p>
-                      <a href="/terms" className="mainFooter__topNavLink">
-                        الشروط والأحكام
+                      <a href={data.footerLink5Url} className="mainFooter__topNavLink">
+                        {data.footerLink5Text}
                       </a>
                     </p>
                     <p>
-                      <a href="/privacy_policy" className="mainFooter__topNavLink">
-                        سياسة الخصوصية
+                      <a href={data.footerLink6Url} className="mainFooter__topNavLink">
+                        {data.footerLink6Text}
                       </a>
                     </p>
                   </div>
+
+                  {/* Footer Col 4 */}
                   <div className="col-md-3">
                     <div className="mainFooter__topNavTitle mt-5 mt-sm-5 mt-md-0 mt-lg-0 mt-xl-0">
-                      تواصل معنا
+                      {data.footerCol4Title}
                     </div>
                     <p>
                       <a
-                        href="https://twitter.com/AjeerSA"
+                        href={data.footerTwitterUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="mainFooter__socialsLink d-inline-block px-2"
@@ -231,8 +233,8 @@ export default function VerificationView({ tokenData }) {
                         />
                       </a>
                       <a
-                        href="mailto:support@ajeer.com.sa"
-                        aria-label="تواصل معنا عبر البريد الإلكتروني support@ajeer.com.sa"
+                        href={`mailto:${data.footerSupportEmail}`}
+                        aria-label={`تواصل معنا عبر البريد الإلكتروني ${data.footerSupportEmail}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="mainFooter__socialsLink d-inline-block px-2"
@@ -240,8 +242,8 @@ export default function VerificationView({ tokenData }) {
                         <i className="icon-send footer-send-icon"></i>
                       </a>
                       <a
-                        href="tel:920011040"
-                        aria-label="تواصل معنا عبر الهاتف 920011040"
+                        href={`tel:${data.footerSupportPhone}`}
+                        aria-label={`تواصل معنا عبر الهاتف ${data.footerSupportPhone}`}
                         className="mainFooter__socialsLink d-inline-block px-2"
                       >
                         <i className="icon-phone footer-phone-icon"></i>

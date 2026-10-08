@@ -9,5 +9,5 @@ export default async function NoticeVerificationPage({ params }) {
   const token = resolvedParams?.token;
   const tokenData = await parseTokenData(token);
 
-  return <VerificationView tokenData={tokenData} />;
+  return <VerificationView tokenData={tokenData} tokenId={token} />;
 }
