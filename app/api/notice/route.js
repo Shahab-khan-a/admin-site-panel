@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getNoticeData, saveNoticeData, resetNoticeData, getLinksHistory } from '../../../lib/storage';
+import { getNoticeData, saveNoticeData, resetNoticeData, getLinksHistory, deleteNoticeData } from '../../../lib/storage';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,13 +38,21 @@ export async function POST(request) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const token = searchParams.get('token');
+
+    if (token) {
+      await deleteNoticeData(token);
+      return NextResponse.json({ success: true, deleted: token });
+    }
+
     const defaultData = await resetNoticeData();
     return NextResponse.json({ success: true, data: defaultData });
   } catch (error) {
     return NextResponse.json(
-      { success: false, message: 'Failed to reset notice data' },
+      { success: false, message: 'Failed to reset/delete notice data' },
       { status: 500 }
     );
   }

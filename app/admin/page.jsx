@@ -2,32 +2,41 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { saveNoticeToFirestore, fetchNoticeFromFirestore, fetchLinksHistory } from '../../lib/firestoreService';
+import {
+  saveNoticeToFirestore,
+  fetchNoticeFromFirestore,
+  fetchLinksHistory,
+  deleteNoticeFromFirestore,
+} from '../../lib/firestoreService';
 import { DEFAULT_NOTICE_DATA } from '../../lib/defaultData';
 import '../../public/dist/css/admin.css';
 
 export default function AdminPage() {
   const [mounted, setMounted] = useState(false);
   const [formData, setFormData] = useState({ ...DEFAULT_NOTICE_DATA });
+  const [editingToken, setEditingToken] = useState(null); // When editing an existing permit
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingToken, setDeletingToken] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [toast, setToast] = useState(null);
   const [activeTab, setActiveTab] = useState('form'); // 'form' | 'history'
   const [generatedLink, setGeneratedLink] = useState(null);
-  const [copied, setCopied] = useState(false);
+  const [copiedToken, setCopiedToken] = useState(null);
   const [historyList, setHistoryList] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Fetch initial data & links history from Firestore on mount
+  // Fetch initial data & links history directly from Firestore on mount
   useEffect(() => {
     async function loadData() {
       try {
         const [firestoreData, history] = await Promise.all([
-          fetchNoticeFromFirestore(),
-          fetchLinksHistory()
+          fetchNoticeFromFirestore('current'),
+          fetchLinksHistory(),
         ]);
 
         if (firestoreData) {
@@ -74,14 +83,16 @@ export default function AdminPage() {
     }));
   };
 
+  // 1. Save or Update Notice directly to Firebase Firestore
   const handleSave = async (e) => {
     if (e) e.preventDefault();
     setSaving(true);
-    setCopied(false);
 
     try {
-      // 1. Generate unique token & save to Firebase Firestore
-      const firestoreResult = await saveNoticeToFirestore(formData);
+      // If editingToken is set, update that specific document in Firestore
+      // Otherwise create a new document with unique token
+      const targetToken = editingToken || null;
+      const firestoreResult = await saveNoticeToFirestore(formData, targetToken);
 
       if (!firestoreResult.success) {
         throw new Error(firestoreResult.error || 'Failed to save to Firebase');
@@ -99,13 +110,20 @@ export default function AdminPage() {
         facilityName: formData.facilityName,
         statusText: formData.statusText,
         isValid: formData.isValid,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
         createdAt: new Date().toISOString(),
       };
 
       setGeneratedLink(linkInfo);
-      setHistoryList((prev) => [linkInfo, ...prev.filter((x) => x.token !== token)].slice(0, 50));
 
-      // 2. Also save to server API as local backup
+      // Update history list in state
+      setHistoryList((prev) => {
+        const filtered = prev.filter((x) => x.token !== token);
+        return [linkInfo, ...filtered];
+      });
+
+      // Also save to server API as local backup
       try {
         await fetch('/api/notice', {
           method: 'POST',
@@ -114,41 +132,128 @@ export default function AdminPage() {
         });
       } catch (err) {}
 
-      showToast('✓ تم حفظ التصريح بنجاح وتوليد الرابط المخصص الجديد!', 'success');
+      if (editingToken) {
+        showToast(`✓ تم تحديث بيانات التصريح (${formData.noticeNumber}) في Firebase بنجاح!`, 'success');
+      } else {
+        showToast(`✓ تم حفظ التصريح الجديد في Firebase وتوليد رابط التحقق المخصص!`, 'success');
+      }
     } catch (err) {
-      showToast('حدث خطأ أثناء الحفظ: ' + err.message, 'error');
+      showToast('حدث خطأ أثناء الحفظ في Firebase: ' + err.message, 'error');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleCopyLink = async (url) => {
+  // 2. Edit Action: Load existing permit data from Firebase into the form
+  const handleEdit = async (item) => {
+    try {
+      setEditingToken(item.token);
+
+      // First set from item for instant response
+      setFormData((prev) => ({
+        ...prev,
+        ...item,
+      }));
+
+      // Switch to form tab
+      setActiveTab('form');
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      // Also fetch full doc from Firestore to ensure all fields are up-to-date
+      const fullDoc = await fetchNoticeFromFirestore(item.token);
+      if (fullDoc) {
+        setFormData((prev) => ({
+          ...prev,
+          ...fullDoc,
+        }));
+      }
+
+      showToast(`✏️ تم تحميل بيانات التصريح (${item.noticeNumber || item.workerName}) للتعديل. قم بالتعديل ثم اضغط حفظ.`, 'success');
+    } catch (err) {
+      showToast('فشل تحميل بيانات التصريح للتعديل: ' + err.message, 'error');
+    }
+  };
+
+  // Cancel edit mode and reset to new permit form
+  const handleCancelEdit = () => {
+    setEditingToken(null);
+    setFormData({ ...DEFAULT_NOTICE_DATA });
+    showToast('تم إلغاء التعديل والعودة لوضع إنشاء تصريح جديد.', 'success');
+  };
+
+  // 3. Delete Action: Delete directly from Firebase and remove from list
+  const handleDelete = async (item) => {
+    const permitName = item.noticeNumber || item.workerName || 'هذا التصريح';
+    if (!window.confirm(`هل أنت متأكد من حذف ${permitName} نهائياً من قاعدة بيانات Firebase؟`)) {
+      return;
+    }
+
+    setDeletingToken(item.token);
+    try {
+      const res = await deleteNoticeFromFirestore(item.token);
+      if (!res.success) {
+        throw new Error(res.error || 'Failed to delete');
+      }
+
+      // Remove from state list
+      setHistoryList((prev) => prev.filter((x) => x.token !== item.token));
+
+      // If currently editing this token, cancel edit mode
+      if (editingToken === item.token) {
+        handleCancelEdit();
+      }
+
+      // If current generatedLink was this token, clear it
+      if (generatedLink?.token === item.token) {
+        setGeneratedLink(null);
+      }
+
+      showToast(`✓ تم حذف التصريح (${permitName}) نهائياً من Firebase!`, 'success');
+    } catch (err) {
+      showToast('حدث خطأ أثناء الحذف من Firebase: ' + err.message, 'error');
+    } finally {
+      setDeletingToken(null);
+    }
+  };
+
+  // 4. Copy Link Action: Copy unique verification URL to clipboard
+  const handleCopyLink = async (url, token = null) => {
     try {
       await navigator.clipboard.writeText(url);
-      setCopied(true);
+      setCopiedToken(token || url);
       showToast('✓ تم نسخ رابط التحقق بنجاح! يمكنك إرساله للعميل الآن.', 'success');
-      setTimeout(() => setCopied(false), 3000);
+      setTimeout(() => setCopiedToken(null), 3000);
     } catch (err) {
       showToast('فشل نسخ الرابط تلقائياً، يمكنك نسخه يدوياً', 'error');
     }
   };
 
-  const handleReset = async () => {
-    if (!window.confirm('هل أنت متأكد من استعادة البيانات الأصلية للتصريح؟')) {
+  // 5. Refresh history list directly from Firebase
+  const handleRefreshHistory = async () => {
+    setRefreshing(true);
+    try {
+      const history = await fetchLinksHistory();
+      if (Array.isArray(history)) {
+        setHistoryList(history);
+        showToast(`✓ تم تحديث القائمة من Firebase بنجاح (${history.length} تصريح)!`, 'success');
+      }
+    } catch (err) {
+      showToast('فشل تحديث القائمة: ' + err.message, 'error');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const handleResetToDefault = async () => {
+    if (!window.confirm('هل أنت متأكد من استعادة القيم الافتراضية؟')) {
       return;
     }
-    setSaving(true);
-    try {
-      setFormData({ ...DEFAULT_NOTICE_DATA });
-      await saveNoticeToFirestore(DEFAULT_NOTICE_DATA);
-      await fetch('/api/notice', { method: 'DELETE' });
-      setGeneratedLink(null);
-      showToast('↺ تمت استعادة البيانات الأصلية بنجاح!', 'success');
-    } catch (err) {
-      showToast('حدث خطأ أثناء الاستعادة', 'error');
-    } finally {
-      setSaving(false);
-    }
+    setEditingToken(null);
+    setFormData({ ...DEFAULT_NOTICE_DATA });
+    setGeneratedLink(null);
+    showToast('↺ تمت استعادة النموذج إلى البيانات الافتراضية.', 'success');
   };
 
   const showToast = (message, type) => {
@@ -157,6 +262,18 @@ export default function AdminPage() {
       setToast(null);
     }, 5000);
   };
+
+  // Filter list by search query
+  const filteredHistory = historyList.filter((item) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (item.noticeNumber && item.noticeNumber.toLowerCase().includes(q)) ||
+      (item.workerName && item.workerName.toLowerCase().includes(q)) ||
+      (item.facilityName && item.facilityName.toLowerCase().includes(q)) ||
+      (item.iqamaNumber && item.iqamaNumber.toLowerCase().includes(q))
+    );
+  });
 
   if (!mounted) {
     return (
@@ -184,7 +301,7 @@ export default function AdminPage() {
                 <span>لوحة التحكم | إدارة تصاريح أجير</span>
                 <span className="admin-brand-badge">سحابي مباشر ● Firebase</span>
               </h1>
-              <p>تعديل فوري وسريع لبيانات التصريح مع توليد روابط تحقق رسمية ومحمية</p>
+              <p>حفظ، تعديل، وحذف التصاريح مباشرة في Firebase مع توليد روابط مخصصة للعملاء</p>
             </div>
           </div>
 
@@ -194,11 +311,11 @@ export default function AdminPage() {
             </Link>
             <button
               type="button"
-              onClick={handleReset}
+              onClick={handleResetToDefault}
               disabled={saving || loading}
-              className="admin-btn admin-btn-danger"
+              className="admin-btn admin-btn-outline"
             >
-              <span>استعادة الأصل ↺</span>
+              <span>نموذج جديد ＋</span>
             </button>
             <button
               type="button"
@@ -206,7 +323,13 @@ export default function AdminPage() {
               disabled={saving || loading}
               className="admin-btn admin-btn-primary"
             >
-              {saving ? <span>جارٍ الحفظ...</span> : <span>حفظ وتوليد الرابط ⚡</span>}
+              {saving ? (
+                <span>جارٍ الحفظ في Firebase...</span>
+              ) : editingToken ? (
+                <span>تحديث وحفظ في Firebase ⚡</span>
+              ) : (
+                <span>حفظ وإنشاء رابط جديد ⚡</span>
+              )}
             </button>
           </div>
         </div>
@@ -217,7 +340,7 @@ export default function AdminPage() {
         {loading ? (
           <div style={{ textAlign: 'center', padding: '80px 0', fontSize: '18px', color: '#64748b', fontWeight: 600 }}>
             <div style={{ fontSize: '36px', marginBottom: '14px' }}>⏳</div>
-            جارٍ تحميل بيانات التصريح من السحابة...
+            جارٍ الاتصال بقاعدة بيانات Firebase وتحميل التصاريح...
           </div>
         ) : (
           <div>
@@ -227,7 +350,7 @@ export default function AdminPage() {
                 <div className="admin-generated-header">
                   <div className="admin-generated-title">
                     <span style={{ fontSize: '22px' }}>⚡</span>
-                    <span>تم إنشاء رابط التحقق المخصص بنجاح!</span>
+                    <span>تم حفظ التصريح في Firebase وتوليد الرابط بنجاح!</span>
                     <span className="admin-generated-badge">جاهز للإرسال للعميل</span>
                   </div>
                   <div style={{ display: 'flex', gap: '8px' }}>
@@ -238,7 +361,7 @@ export default function AdminPage() {
                       className="admin-btn admin-btn-outline"
                       style={{ padding: '6px 14px', fontSize: '13px' }}
                     >
-                      فتح ومعاينة الرابط ↗
+                      معاينة الرابط ↗
                     </a>
                   </div>
                 </div>
@@ -253,10 +376,10 @@ export default function AdminPage() {
                   />
                   <button
                     type="button"
-                    onClick={() => handleCopyLink(generatedLink.url)}
-                    className={`admin-btn-copy ${copied ? 'copied' : ''}`}
+                    onClick={() => handleCopyLink(generatedLink.url, 'generated')}
+                    className={`admin-btn-copy ${copiedToken === 'generated' ? 'copied' : ''}`}
                   >
-                    {copied ? <span>تم النسخ بنجاح ✓</span> : <span>نسخ الرابط 📋</span>}
+                    {copiedToken === 'generated' ? <span>تم النسخ بنجاح ✓</span> : <span>نسخ الرابط 📋</span>}
                   </button>
                 </div>
 
@@ -275,9 +398,7 @@ export default function AdminPage() {
                   <span>
                     رقم التصريح: <strong>{generatedLink.noticeNumber}</strong> | العامل: <strong>{generatedLink.workerName}</strong> | الحالة: <strong>{generatedLink.statusText}</strong>
                   </span>
-                  <span>
-                    ✓ مرتبط مباشرة بسحابة Firebase ومحمي
-                  </span>
+                  <span>✓ محفوظ في Firebase Firestore ويعمل بدون أخطاء</span>
                 </div>
               </div>
             )}
@@ -290,7 +411,8 @@ export default function AdminPage() {
                 className={`admin-tab-btn ${activeTab === 'form' ? 'active' : ''}`}
               >
                 <span>📝</span>
-                <span>تعديل بيانات التصريح</span>
+                <span>{editingToken ? 'تعديل التصريح المحدد' : 'إنشاء تصريح جديد'}</span>
+                {editingToken && <span className="admin-edit-badge">وضع التعديل</span>}
               </button>
 
               <button
@@ -298,26 +420,47 @@ export default function AdminPage() {
                 onClick={() => setActiveTab('history')}
                 className={`admin-tab-btn ${activeTab === 'history' ? 'active' : ''}`}
               >
-                <span>🔗</span>
-                <span>سجل الروابط المنشأة</span>
+                <span>📋</span>
+                <span>قائمة التصاريح في Firebase</span>
                 <span className="admin-tab-count">{historyList.length}</span>
               </button>
             </div>
 
-            {/* TAB 1: Streamlined Form */}
+            {/* TAB 1: Permit Form (Create / Edit) */}
             {activeTab === 'form' && (
               <form onSubmit={handleSave}>
+                {/* Active Edit Mode Banner */}
+                {editingToken && (
+                  <div className="admin-edit-banner">
+                    <div className="admin-edit-banner-info">
+                      <span>✏️</span>
+                      <span>
+                        أنت الآن تقوم بتعديل التصريح رقم: <strong>{formData.noticeNumber || '-'}</strong> للعامل:{' '}
+                        <strong>{formData.workerName || '-'}</strong>
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      className="admin-btn admin-btn-outline"
+                      style={{ padding: '6px 14px', fontSize: '12.5px' }}
+                    >
+                      إلغاء التعديل والبدء بتصريح جديد ✕
+                    </button>
+                  </div>
+                )}
+
                 {/* 1. Status Picker Card */}
                 <section className="admin-card">
                   <div className="admin-card-header">
                     <h2>
                       <span className="admin-card-header-icon">🛡️</span>
-                      حالة التصريح
+                      حالة صلاحية التصريح
                     </h2>
                   </div>
                   <div className="admin-card-body">
                     <label className="admin-label">
-                      <span>حدد حالة التصريح (تظهر بشكل بارز في التقرير)</span>
+                      <span>حدد حالة التصريح (سوف تظهر للعميل بلونها المعتمد)</span>
                     </label>
                     <div className="admin-status-picker">
                       <div
@@ -611,37 +754,89 @@ export default function AdminPage() {
                   </div>
                 </section>
 
-                {/* Bottom Primary Action */}
-                <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center' }}>
+                {/* Primary Save Button */}
+                <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center', gap: '12px' }}>
+                  {editingToken && (
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      className="admin-btn admin-btn-outline"
+                      style={{ padding: '14px 24px', fontSize: '15px', borderRadius: '12px' }}
+                    >
+                      إلغاء ✕
+                    </button>
+                  )}
                   <button
                     type="submit"
                     disabled={saving || loading}
                     className="admin-btn admin-btn-primary"
                     style={{ minWidth: '320px', padding: '14px 28px', fontSize: '16px', borderRadius: '12px' }}
                   >
-                    {saving ? <span>جارٍ الحفظ في Firebase...</span> : <span>حفظ التعديلات وإنشاء رابط جديد ⚡</span>}
+                    {saving ? (
+                      <span>جارٍ الحفظ في Firebase...</span>
+                    ) : editingToken ? (
+                      <span>تحديث وحفظ التصريح في Firebase ⚡</span>
+                    ) : (
+                      <span>حفظ التصريح وإنشاء رابط جديد ⚡</span>
+                    )}
                   </button>
                 </div>
               </form>
             )}
 
-            {/* TAB 2: Links History */}
+            {/* TAB 2: List of all Permits Loaded from Firebase */}
             {activeTab === 'history' && (
               <section className="admin-card">
                 <div className="admin-card-header">
                   <h2>
-                    <span className="admin-card-header-icon">🔗</span>
-                    سجل الروابط المنشأة سحابياً ({historyList.length})
+                    <span className="admin-card-header-icon">📋</span>
+                    قائمة التصاريح المحفوظة في Firebase ({historyList.length})
                   </h2>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={handleRefreshHistory}
+                      disabled={refreshing}
+                      className="admin-btn admin-btn-outline"
+                      style={{ padding: '6px 14px', fontSize: '13px' }}
+                    >
+                      {refreshing ? 'جارٍ التحديث...' : 'تحديث القائمة من Firebase 🔄'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleCancelEdit();
+                        setActiveTab('form');
+                      }}
+                      className="admin-btn admin-btn-primary"
+                      style={{ padding: '6px 14px', fontSize: '13px' }}
+                    >
+                      إضافة تصريح جديد ＋
+                    </button>
+                  </div>
                 </div>
+
                 <div className="admin-card-body">
-                  <p style={{ fontSize: '13.5px', color: '#64748b', marginBottom: '16px', fontWeight: 500 }}>
-                    كل تعديل تقوم بحفظه يتم تخزينه سحابياً في Firebase مع توليد رابط مخصص له. يمكنك نسخ أي رابط أو فتحه مباشرة:
-                  </p>
-                  {historyList.length === 0 ? (
+                  {/* Search Bar */}
+                  {historyList.length > 0 && (
+                    <div style={{ marginBottom: '16px' }}>
+                      <input
+                        type="text"
+                        placeholder="🔍 ابحث برقم التصريح، اسم العامل، رقم الإقامة، أو المنشأة..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="admin-input no-icon"
+                        style={{ padding: '10px 16px', fontSize: '14px', borderRadius: '8px' }}
+                      />
+                    </div>
+                  )}
+
+                  {filteredHistory.length === 0 ? (
                     <div style={{ padding: '48px', textAlign: 'center', color: '#94a3b8', background: '#f8fafc', borderRadius: '12px' }}>
-                      <div style={{ fontSize: '32px', marginBottom: '8px' }}>📭</div>
-                      لا توجد روابط منشأة بعد. قم بتعديل بيانات التصريح واضغط "حفظ وإنشاء رابط جديد" لإنشاء أول رابط.
+                      <div style={{ fontSize: '36px', marginBottom: '10px' }}>📭</div>
+                      {historyList.length === 0
+                        ? 'لا توجد تصاريح محفوظة في Firebase بعد. قم بتعبئة النموذج واضغط "حفظ" لإنشاء أول تصريح.'
+                        : 'لا توجد نتائج تطابق بحثك.'}
                     </div>
                   ) : (
                     <div style={{ overflowX: 'auto' }}>
@@ -652,19 +847,23 @@ export default function AdminPage() {
                             <th>اسم العامل</th>
                             <th>اسم المنشأة</th>
                             <th>الحالة</th>
-                            <th>وقت الإنشاء</th>
-                            <th>الإجراءات السريعة</th>
+                            <th>تاريخ الصلاحية</th>
+                            <th>الإجراءات (نسخ / تعديل / حذف)</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {historyList.map((item, idx) => {
+                          {filteredHistory.map((item, idx) => {
                             const origin = typeof window !== 'undefined' ? window.location.origin : '';
                             const itemUrl = item.url || `${origin}/notice-verification/${item.token}`;
-                            const isValid = item.isValid !== false && item.statusText?.includes('ساري');
+                            const isValid = item.isValid !== false && (!item.statusText || item.statusText.includes('ساري'));
+                            const isBeingDeleted = deletingToken === item.token;
+                            const isCopied = copiedToken === item.token;
 
                             return (
                               <tr key={item.token || idx}>
-                                <td><strong>{item.noticeNumber || '-'}</strong></td>
+                                <td>
+                                  <strong>{item.noticeNumber || '-'}</strong>
+                                </td>
                                 <td>{item.workerName || '-'}</td>
                                 <td>{item.facilityName || '-'}</td>
                                 <td>
@@ -679,30 +878,61 @@ export default function AdminPage() {
                                       color: isValid ? '#15803d' : '#b91c1c',
                                     }}
                                   >
-                                    {item.statusText || (isValid ? 'ساري' : 'ملغي')}
+                                    {item.statusText || (isValid ? 'ساري / فعال' : 'منتهي / ملغي')}
                                   </span>
                                 </td>
                                 <td style={{ fontSize: '12px', color: '#64748b', whiteSpace: 'nowrap' }}>
-                                  {item.createdAt ? new Date(item.createdAt).toLocaleString('ar-SA') : '-'}
+                                  {item.startDate && item.endDate
+                                    ? `${item.startDate} إلى ${item.endDate}`
+                                    : item.createdAt
+                                    ? new Date(item.createdAt).toLocaleDateString('ar-SA')
+                                    : '-'}
                                 </td>
                                 <td>
-                                  <div style={{ display: 'flex', gap: '8px' }}>
+                                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                    {/* 1. Copy Link Icon */}
                                     <button
                                       type="button"
-                                      onClick={() => handleCopyLink(itemUrl)}
-                                      className="admin-btn admin-btn-outline"
-                                      style={{ padding: '6px 12px', fontSize: '12px' }}
+                                      onClick={() => handleCopyLink(itemUrl, item.token)}
+                                      className="admin-action-btn admin-action-btn-copy"
+                                      title="نسخ رابط التحقق لإرساله للعميل"
                                     >
-                                      نسخ الرابط 📋
+                                      <span>📋</span>
+                                      <span>{isCopied ? 'تم النسخ ✓' : 'نسخ الرابط'}</span>
                                     </button>
+
+                                    {/* 2. Edit Icon */}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleEdit(item)}
+                                      className="admin-action-btn admin-action-btn-edit"
+                                      title="تعديل هذا التصريح وتحديثه في Firebase"
+                                    >
+                                      <span>✏️</span>
+                                      <span>تعديل</span>
+                                    </button>
+
+                                    {/* 3. Delete Icon */}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDelete(item)}
+                                      disabled={isBeingDeleted}
+                                      className="admin-action-btn admin-action-btn-delete"
+                                      title="حذف هذا التصريح نهائياً من Firebase"
+                                    >
+                                      <span>🗑️</span>
+                                      <span>{isBeingDeleted ? 'جارٍ الحذف...' : 'حذف'}</span>
+                                    </button>
+
+                                    {/* 4. Open in new tab Icon */}
                                     <a
                                       href={itemUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="admin-btn admin-btn-outline"
-                                      style={{ padding: '6px 12px', fontSize: '12px' }}
+                                      className="admin-action-btn admin-action-btn-view"
+                                      title="فتح ومعاينة صفحة التحقق في نافذة جديدة"
                                     >
-                                      معاينة ↗
+                                      <span>↗</span>
                                     </a>
                                   </div>
                                 </td>
