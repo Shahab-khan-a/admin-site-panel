@@ -6,7 +6,7 @@ import { DEFAULT_NOTICE_DATA } from '../lib/defaultData';
 
 export default function AjeerNoticeView({ tokenData, tokenId }) {
   const [mounted, setMounted] = useState(false);
-  const [lang, setLang] = useState('en'); // Default 'en' matching Picture 1
+  const [lang, setLang] = useState('en'); // Default 'en' matching reference
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
@@ -136,7 +136,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
         flexDirection: 'column',
         justifyContent: 'space-between',
         backgroundColor: '#edf2f7',
-        fontFamily: "'FrutigerLTArabic-55Roman', 'HelveticaNeue', -apple-system, BlinkMacSystemFont, Arial, sans-serif",
+        fontFamily: "'Cairo', sans-serif",
         color: '#1d2d42',
         position: 'relative',
       }}
@@ -161,6 +161,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
             gap: '10px',
             fontSize: '14px',
             fontWeight: 600,
+            fontFamily: "'Cairo', sans-serif",
           }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00c186" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -224,7 +225,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                fontFamily: 'inherit',
+                fontFamily: "'Cairo', sans-serif",
               }}
             >
               🌐 {isRtl ? 'English' : 'العربية'}
@@ -233,7 +234,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
               href="https://knowledge.qiwa.sa/"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: '#4e555e', fontSize: '14px', textDecoration: 'none', fontWeight: 600 }}
+              style={{ color: '#4e555e', fontSize: '14px', textDecoration: 'none', fontWeight: 600, fontFamily: "'Cairo', sans-serif" }}
             >
               {isRtl ? 'مركز المعرفة' : 'Knowledge center'}
             </a>
@@ -249,6 +250,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
                 border: '1px solid #152e83',
                 padding: '7px 16px',
                 borderRadius: '4px',
+                fontFamily: "'Cairo', sans-serif",
               }}
             >
               {isRtl ? 'شركات الاستقدام المرخصة' : 'Licensed recruitment companies'}
@@ -257,7 +259,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
               href="https://auth.qiwa.sa/sign-in"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: '#4e555e', fontSize: '14px', textDecoration: 'none', fontWeight: 600 }}
+              style={{ color: '#4e555e', fontSize: '14px', textDecoration: 'none', fontWeight: 600, fontFamily: "'Cairo', sans-serif" }}
             >
               {isRtl ? 'تسجيل الدخول' : 'Sign in'}
             </a>
@@ -273,6 +275,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
                 fontWeight: 600,
                 padding: '8px 20px',
                 borderRadius: '4px',
+                fontFamily: "'Cairo', sans-serif",
               }}
             >
               {isRtl ? 'تسجيل جديد' : 'Register'}
@@ -330,6 +333,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
               gap: '14px',
               zIndex: 99,
               borderTop: '1px solid #e7ecf3',
+              fontFamily: "'Cairo', sans-serif",
             }}
           >
             <button
@@ -347,7 +351,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
                 fontSize: '15px',
                 fontWeight: 600,
                 color: '#152e83',
-                fontFamily: 'inherit',
+                fontFamily: "'Cairo', sans-serif",
                 cursor: 'pointer',
               }}
             >
@@ -357,7 +361,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
               href="https://knowledge.qiwa.sa/"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: '#1d2d42', textDecoration: 'none', fontSize: '15px', fontWeight: 600, padding: '8px 0' }}
+              style={{ color: '#1d2d42', textDecoration: 'none', fontSize: '15px', fontWeight: 600, padding: '8px 0', fontFamily: "'Cairo', sans-serif" }}
             >
               {isRtl ? 'مركز المعرفة' : 'Knowledge center'}
             </a>
@@ -365,7 +369,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
               href="https://bab-ajeer.qiwa.sa/"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: '#1d2d42', textDecoration: 'none', fontSize: '15px', fontWeight: 600, padding: '8px 0' }}
+              style={{ color: '#1d2d42', textDecoration: 'none', fontSize: '15px', fontWeight: 600, padding: '8px 0', fontFamily: "'Cairo', sans-serif" }}
             >
               {isRtl ? 'شركات الاستقدام المرخصة' : 'Licensed recruitment companies'}
             </a>
@@ -373,7 +377,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
               href="https://auth.qiwa.sa/sign-in"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: '#1d2d42', textDecoration: 'none', fontSize: '15px', fontWeight: 600, padding: '8px 0' }}
+              style={{ color: '#1d2d42', textDecoration: 'none', fontSize: '15px', fontWeight: 600, padding: '8px 0', fontFamily: "'Cairo', sans-serif" }}
             >
               {isRtl ? 'تسجيل الدخول' : 'Sign in'}
             </a>
@@ -389,6 +393,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
                 padding: '12px',
                 borderRadius: '6px',
                 fontWeight: 600,
+                fontFamily: "'Cairo', sans-serif",
               }}
             >
               {isRtl ? 'تسجيل جديد' : 'Register'}
@@ -416,7 +421,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
             color: '#152e83',
             margin: '0 0 20px 0',
             textAlign: isRtl ? 'right' : 'left',
-            fontFamily: "'FrutigerLTArabic-65Bold', 'HelveticaNeue', sans-serif",
+            fontFamily: "'Cairo', sans-serif",
             letterSpacing: '-0.2px',
           }}
         >
@@ -643,32 +648,13 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
         </div>
       </footer>
 
-      {/* Global font-faces and Next.js dev overlay suppression */}
+      {/* Global Cairo Font Import and suppression of Next.js dev overlay */}
       <style jsx global>{`
-        @font-face {
-          font-family: 'FrutigerLTArabic-55Roman';
-          src: url('/assets/FrutigerLTArabic-55Roman-MWBpO6AF.woff') format('woff'),
-               url('/assets/FrutigerLTArabic-55Roman-DcatSmBs.ttf') format('truetype');
-          font-weight: 400;
-          font-style: normal;
-          font-display: swap;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
 
-        @font-face {
-          font-family: 'FrutigerLTArabic-65Bold';
-          src: url('/assets/FrutigerLTArabic-65Bold-JBA9amnD.woff') format('woff'),
-               url('/assets/FrutigerLTArabic-65Bold-DZRczdd_.ttf') format('truetype');
-          font-weight: 700;
-          font-style: normal;
-          font-display: swap;
-        }
-
-        @font-face {
-          font-family: 'HelveticaNeue';
-          src: url('/assets/HelveticaNeue-mIB6uj_W.ttf') format('truetype');
-          font-weight: 400;
-          font-style: normal;
-          font-display: swap;
+        .ajeer-page-root,
+        .ajeer-page-root * {
+          font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
         }
 
         /* Suppress Next.js dev overlay circle icon ("N") completely */
@@ -684,7 +670,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
         }
       `}</style>
 
-      {/* Scoped CSS Styles for Exact UI Match */}
+      {/* Scoped CSS Styles */}
       <style jsx>{`
         .ajeer-cards-wrapper {
           display: flex;
@@ -725,7 +711,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
           text-transform: uppercase;
           background-color: #ffffff;
           letter-spacing: 0.3px;
-          font-family: 'FrutigerLTArabic-65Bold', 'HelveticaNeue', sans-serif;
+          font-family: 'Cairo', sans-serif !important;
         }
 
         .ajeer-card-body {
@@ -746,17 +732,18 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
           font-size: 13px;
           color: #64748b;
           margin-bottom: 4px;
-          font-weight: 400;
+          font-weight: 500;
           line-height: 1.4;
+          font-family: 'Cairo', sans-serif !important;
         }
 
         .ajeer-field-value {
           font-size: 15px;
-          font-weight: 600;
+          font-weight: 700;
           color: #1d2d42;
           word-break: break-word;
           line-height: 1.4;
-          font-family: 'FrutigerLTArabic-55Roman', 'HelveticaNeue', sans-serif;
+          font-family: 'Cairo', sans-serif !important;
         }
 
         .ajeer-field-name {
@@ -765,8 +752,8 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
         }
 
         .ajeer-field-arabic {
-          font-family: 'FrutigerLTArabic-55Roman', 'FrutigerLTArabic-65Bold', sans-serif;
-          font-weight: 600;
+          font-family: 'Cairo', sans-serif !important;
+          font-weight: 700;
           line-height: 1.5;
         }
 
@@ -781,6 +768,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
           background-color: #eef2fb;
           color: #152e83;
           letter-spacing: 0.3px;
+          font-family: 'Cairo', sans-serif !important;
         }
 
         .ajeer-action-wrapper {
@@ -797,13 +785,13 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
           border-radius: 6px;
           padding: 12px 24px;
           font-size: 15px;
-          font-weight: 600;
+          font-weight: 700;
           cursor: pointer;
           display: inline-flex;
           align-items: center;
           justify-content: center;
           gap: 10px;
-          font-family: inherit;
+          font-family: 'Cairo', sans-serif !important;
           height: 48px;
           box-shadow: 0 2px 4px rgba(21, 46, 131, 0.2);
           transition: background-color 0.2s ease;
@@ -819,6 +807,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
           padding: 36px 20px 28px 20px;
           width: 100%;
           box-sizing: border-box;
+          font-family: 'Cairo', sans-serif !important;
         }
 
         .ajeer-footer-content {
@@ -843,6 +832,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
           font-size: 14px;
           text-decoration: none;
           transition: color 0.2s;
+          font-family: 'Cairo', sans-serif !important;
         }
 
         .ajeer-footer-link:hover {
@@ -853,6 +843,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
           color: #526071;
           font-size: 14px;
           margin-bottom: 16px;
+          font-family: 'Cairo', sans-serif !important;
         }
 
         .ajeer-footer-lang-wrap {
@@ -865,11 +856,11 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
           cursor: pointer;
           color: #1d2d42;
           font-size: 15px;
-          font-weight: 500;
+          font-weight: 600;
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          font-family: inherit;
+          font-family: 'Cairo', sans-serif !important;
           padding: 6px 12px;
         }
 
