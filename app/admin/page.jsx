@@ -15,7 +15,7 @@ export default function AdminPage() {
   const [mounted, setMounted] = useState(false);
   const [formData, setFormData] = useState({ ...DEFAULT_NOTICE_DATA });
   const [editingToken, setEditingToken] = useState(null); // When editing an existing permit
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deletingToken, setDeletingToken] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -32,39 +32,53 @@ export default function AdminPage() {
 
   // Fetch initial data & links history directly from Firestore on mount
   useEffect(() => {
+    let active = true;
+
     async function loadData() {
       try {
-        const [firestoreData, history] = await Promise.all([
-          fetchNoticeFromFirestore('current'),
-          fetchLinksHistory(),
+        const timeoutPromise = (ms) => new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms));
+
+        // Attempt Firestore with 3s timeout
+        const [firestoreData, history] = await Promise.allSettled([
+          Promise.race([fetchNoticeFromFirestore('current'), timeoutPromise(3000)]),
+          Promise.race([fetchLinksHistory(), timeoutPromise(3000)]),
         ]);
 
-        if (firestoreData) {
-          setFormData((prev) => ({ ...prev, ...firestoreData }));
+        if (!active) return;
+
+        if (firestoreData.status === 'fulfilled' && firestoreData.value) {
+          setFormData((prev) => ({ ...prev, ...firestoreData.value }));
         } else {
-          const res = await fetch('/api/notice');
-          const json = await res.json();
-          if (json.success && json.data) {
-            setFormData((prev) => ({ ...prev, ...json.data }));
-          }
+          try {
+            const res = await fetch('/api/notice');
+            const json = await res.json();
+            if (json.success && json.data && active) {
+              setFormData((prev) => ({ ...prev, ...json.data }));
+            }
+          } catch (e) {}
         }
 
-        if (Array.isArray(history) && history.length > 0) {
-          setHistoryList(history);
+        if (history.status === 'fulfilled' && Array.isArray(history.value) && history.value.length > 0) {
+          setHistoryList(history.value);
         } else {
-          const histRes = await fetch('/api/notice?history=true');
-          const histJson = await histRes.json();
-          if (histJson.success && Array.isArray(histJson.history)) {
-            setHistoryList(histJson.history);
-          }
+          try {
+            const histRes = await fetch('/api/notice?history=true');
+            const histJson = await histRes.json();
+            if (histJson.success && Array.isArray(histJson.history) && active) {
+              setHistoryList(histJson.history);
+            }
+          } catch (e) {}
         }
       } catch (err) {
-        console.error('Failed to load initial notice data:', err);
-      } finally {
-        setLoading(false);
+        console.warn('Initial data load notice:', err.message);
       }
     }
+
     loadData();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleChange = (e) => {
@@ -104,11 +118,15 @@ export default function AdminPage() {
         : (typeof window !== 'undefined' ? window.location.origin : '');
       const fullUrl = `${baseUrl}/notice-verification/${token}`;
       const mainUrl = `${baseUrl}/`;
+      const newUrl = `${baseUrl}/notices/${token}`;
+      const newMainUrl = `${baseUrl}/notices`;
 
       const linkInfo = {
         token,
         url: fullUrl,
         mainUrl,
+        newUrl,
+        newMainUrl,
         noticeNumber: formData.noticeNumber,
         workerName: formData.workerName,
         facilityName: formData.facilityName,
@@ -116,6 +134,12 @@ export default function AdminPage() {
         isValid: formData.isValid,
         startDate: formData.startDate,
         endDate: formData.endDate,
+        beneficiaryCompanyName: formData.beneficiaryCompanyName || formData.facilityName,
+        beneficiaryCompanyNumber: formData.beneficiaryCompanyNumber || formData.facilityNumber,
+        istiqdamCompanyName: formData.istiqdamCompanyName,
+        istiqdamCompanyNumber: formData.istiqdamCompanyNumber,
+        canceledAt: formData.canceledAt,
+        newNoticePageTitle: formData.newNoticePageTitle,
         createdAt: new Date().toISOString(),
       };
 
@@ -346,14 +370,8 @@ export default function AdminPage() {
     );
   });
 
-  if (!mounted) {
-    return (
-      <div className="admin-wrapper" style={{ minHeight: '100vh', background: '#f8fafc' }} suppressHydrationWarning />
-    );
-  }
-
   return (
-    <div className="admin-wrapper" dir="rtl">
+    <div className="admin-wrapper" dir="rtl" suppressHydrationWarning>
       {/* Toast Alert */}
       {toast && (
         <div className={`admin-toast admin-toast-${toast.type === 'error' ? 'error' : 'success'}`}>
@@ -390,7 +408,7 @@ export default function AdminPage() {
             <button
               type="button"
               onClick={handleResetToDefault}
-              disabled={saving || loading}
+              disabled={saving}
               className="admin-btn admin-btn-outline"
             >
               <span>نموذج جديد ＋</span>
@@ -398,7 +416,7 @@ export default function AdminPage() {
             <button
               type="button"
               onClick={handleSave}
-              disabled={saving || loading}
+              disabled={saving}
               className="admin-btn admin-btn-primary"
             >
               {saving ? (
@@ -415,14 +433,8 @@ export default function AdminPage() {
 
       {/* Main Container */}
       <main className="admin-container">
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '80px 0', fontSize: '18px', color: '#64748b', fontWeight: 600 }}>
-            <div style={{ fontSize: '36px', marginBottom: '14px' }}>⏳</div>
-            جارٍ الاتصال بقاعدة بيانات Firebase وتحميل التصاريح...
-          </div>
-        ) : (
-          <div>
-            {/* Generated Link Prominent Banner */}
+        <div>
+          {/* Generated Link Prominent Banner */}
             {generatedLink && (
               <div className="admin-generated-box">
                 <div className="admin-generated-header">
@@ -433,21 +445,30 @@ export default function AdminPage() {
                   </div>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <a
+                      href={generatedLink.newUrl || generatedLink.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="admin-btn"
+                      style={{ padding: '6px 14px', fontSize: '13px', backgroundColor: '#eab308', color: '#713f12', fontWeight: 700 }}
+                    >
+                      معاينة رابط قوى الجديد ↗
+                    </a>
+                    <a
                       href={generatedLink.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="admin-btn admin-btn-primary"
                       style={{ padding: '6px 14px', fontSize: '13px' }}
                     >
-                      معاينة رابط التصريح ↗
+                      معاينة الرابط الكلاسيكي ↗
                     </a>
                   </div>
                 </div>
 
-                {/* Option 1: Direct Permit Verification Link */}
-                <div style={{ marginBottom: '12px' }}>
-                  <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#166534', marginBottom: '4px', display: 'block' }}>
-                    🔗 رابط التحقق المخصص لهذا التصريح (أرسل هذا الرابط للعميل):
+                {/* Option 1: Direct Classic Verification Link */}
+                <div style={{ marginBottom: '14px', padding: '12px 14px', background: '#f0fdf4', borderRadius: '10px', border: '1px solid #bbf7d0' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 700, color: '#166534', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>🔗 الرابط الأول: رابط صفحة التحقق الكلاسيكية (الموقع الحالي):</span>
                   </label>
                   <div className="admin-link-input-group">
                     <input
@@ -462,42 +483,107 @@ export default function AdminPage() {
                       onClick={() => handleCopyLink(generatedLink.url, 'generated_permit')}
                       className={`admin-btn-copy ${copiedToken === 'generated_permit' ? 'copied' : ''}`}
                     >
-                      {copiedToken === 'generated_permit' ? <span>تم النسخ بنجاح ✓</span> : <span>نسخ رابط التصريح 📋</span>}
+                      {copiedToken === 'generated_permit' ? <span>تم النسخ بنجاح ✓</span> : <span>نسخ الرابط الكلاسيكي 📋</span>}
                     </button>
+                    <a
+                      href={generatedLink.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="admin-btn admin-btn-outline"
+                      style={{ padding: '6px 14px', fontSize: '12.5px' }}
+                    >
+                      فتح ↗
+                    </a>
                   </div>
                 </div>
 
-                {/* Option 2: Main Page Link (also updated in Firebase) */}
-                {generatedLink.mainUrl && (
-                  <div style={{ marginBottom: '12px' }}>
-                    <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#166534', marginBottom: '4px', display: 'block' }}>
-                      🌐 رابط الصفحة الرئيسية (تظهر عليه هذه البيانات المحدثة أيضاً):
-                    </label>
-                    <div className="admin-link-input-group">
-                      <input
-                        type="text"
-                        readOnly
-                        value={generatedLink.mainUrl}
-                        className="admin-link-input"
-                        onClick={(e) => e.target.select()}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleCopyLink(generatedLink.mainUrl, 'generated_main')}
-                        className={`admin-btn-copy ${copiedToken === 'generated_main' ? 'copied' : ''}`}
-                      >
-                        {copiedToken === 'generated_main' ? <span>تم النسخ بنجاح ✓</span> : <span>نسخ رابط الرئيسية 📋</span>}
-                      </button>
-                      <a
-                        href={generatedLink.mainUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="admin-btn admin-btn-outline"
-                        style={{ padding: '6px 14px', fontSize: '12.5px' }}
-                      >
-                        فتح ↗
-                      </a>
-                    </div>
+                {/* Option 2: NEW Qiwa Ajeer HRS Link (Yellow Box) */}
+                <div style={{ marginBottom: '14px', padding: '14px', background: '#fefce8', borderRadius: '10px', border: '2px solid #eab308' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 800, color: '#854d0e', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>🟡 الرابط الثاني: رابط صفحة أجير قوى الجديدة المطابق للموقع (https://ajeer-hrs.qiwa.sa/notices/...):</span>
+                    <span style={{ fontSize: '11px', background: '#fef08a', padding: '2px 8px', borderRadius: '12px', border: '1px solid #facc15' }}>مطابق للرابط المرفق ⚡</span>
+                  </label>
+                  <div className="admin-link-input-group">
+                    <input
+                      type="text"
+                      readOnly
+                      value={generatedLink.newUrl || `${(typeof window !== 'undefined' ? window.location.origin : '')}/notices/${generatedLink.token}`}
+                      className="admin-link-input admin-input-yellow"
+                      onClick={(e) => e.target.select()}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleCopyLink(generatedLink.newUrl || `${(typeof window !== 'undefined' ? window.location.origin : '')}/notices/${generatedLink.token}`, 'generated_new_permit')}
+                      className={`admin-btn-copy admin-action-btn-copy-yellow ${copiedToken === 'generated_new_permit' ? 'copied' : ''}`}
+                    >
+                      {copiedToken === 'generated_new_permit' ? <span>تم النسخ بنجاح ✓</span> : <span>نسخ رابط قوى الجديد 📋</span>}
+                    </button>
+                    <a
+                      href={generatedLink.newUrl || `/notices/${generatedLink.token}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="admin-btn"
+                      style={{ padding: '6px 14px', fontSize: '12.5px', background: '#fef08a', color: '#713f12', border: '1px solid #eab308', fontWeight: 700 }}
+                    >
+                      فتح ↗
+                    </a>
+                  </div>
+                </div>
+
+                {/* Option 3: Main Page Links */}
+                {(generatedLink.mainUrl || generatedLink.newMainUrl) && (
+                  <div style={{ marginBottom: '12px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    {generatedLink.mainUrl && (
+                      <div style={{ flex: 1, minWidth: '240px' }}>
+                        <label style={{ fontSize: '12px', fontWeight: 700, color: '#166534', marginBottom: '4px', display: 'block' }}>
+                          🌐 رئيسية التصميم الكلاسيكي:
+                        </label>
+                        <div className="admin-link-input-group">
+                          <input
+                            type="text"
+                            readOnly
+                            value={generatedLink.mainUrl}
+                            className="admin-link-input"
+                            style={{ fontSize: '12px', padding: '6px 10px' }}
+                            onClick={(e) => e.target.select()}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleCopyLink(generatedLink.mainUrl, 'generated_main')}
+                            className={`admin-btn-copy ${copiedToken === 'generated_main' ? 'copied' : ''}`}
+                            style={{ padding: '6px 10px', fontSize: '11.5px' }}
+                          >
+                            {copiedToken === 'generated_main' ? 'تم ✓' : 'نسخ 📋'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {generatedLink.newMainUrl && (
+                      <div style={{ flex: 1, minWidth: '240px' }}>
+                        <label style={{ fontSize: '12px', fontWeight: 700, color: '#854d0e', marginBottom: '4px', display: 'block' }}>
+                          🟡 رئيسية تصميم قوى الجديد:
+                        </label>
+                        <div className="admin-link-input-group">
+                          <input
+                            type="text"
+                            readOnly
+                            value={generatedLink.newMainUrl}
+                            className="admin-link-input"
+                            style={{ fontSize: '12px', padding: '6px 10px', borderColor: '#eab308', background: '#fefce8' }}
+                            onClick={(e) => e.target.select()}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleCopyLink(generatedLink.newMainUrl, 'generated_new_main')}
+                            className={`admin-btn-copy admin-action-btn-copy-yellow ${copiedToken === 'generated_new_main' ? 'copied' : ''}`}
+                            style={{ padding: '6px 10px', fontSize: '11.5px' }}
+                          >
+                            {copiedToken === 'generated_new_main' ? 'تم ✓' : 'نسخ 📋'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -903,6 +989,232 @@ export default function AdminPage() {
                   </div>
                 </section>
 
+                {/* 5. NEW: Yellow Card for New Ajeer Qiwa Notice Page Extra Inputs */}
+                <section className="admin-card-yellow">
+                  <div className="admin-card-yellow-header">
+                    <h2 className="admin-card-yellow-title">
+                      <span style={{ fontSize: '22px' }}>🟡</span>
+                      <span>حقول إضافية خاصة بصفحة أجير قوى الجديدة (الموقع الجديد)</span>
+                    </h2>
+                    <span
+                      style={{
+                        backgroundColor: '#ca8a04',
+                        color: '#ffffff',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        padding: '4px 12px',
+                        borderRadius: '20px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                      }}
+                    >
+                      خاص بالرابط الجديد ⚡
+                    </span>
+                  </div>
+
+                  <div className="admin-card-body" style={{ padding: '24px' }}>
+                    <div
+                      style={{
+                        backgroundColor: '#fefce8',
+                        border: '1px solid #fef08a',
+                        borderRadius: '10px',
+                        padding: '12px 16px',
+                        marginBottom: '20px',
+                        fontSize: '13.5px',
+                        color: '#854d0e',
+                        lineHeight: 1.6,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                      }}
+                    >
+                      <span style={{ fontSize: '20px' }}>💡</span>
+                      <span>
+                        <strong>تنبيه مميز:</strong> هذه الحقول مخصصة حصرياً لصفحة التحقق الجديدة ذات الرابط المطابق لموقع أجير قوى الجديد (
+                        <code style={{ direction: 'ltr', display: 'inline-block', background: '#fef9c3', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                          /notices/[token]
+                        </code>
+                        ). جميع البيانات المُدخلة هنا يتم حفظها في Firebase وتظهر مباشرة في الكروت الثلاثة لصفحة قوى الجديدة.
+                      </span>
+                    </div>
+
+                    {/* Beneficiary Company (المنشأة المستفيدة) */}
+                    <div style={{ marginBottom: '16px', fontWeight: 700, color: '#713f12', fontSize: '15px' }}>
+                      🏢 بيانات المنشأة المستفيدة (الكرت الثاني في الصفحة الجديدة):
+                    </div>
+                    <div className="admin-form-row">
+                      <div>
+                        <label className="admin-label" style={{ color: '#854d0e' }}>
+                          <span>اسم المنشأة المستفيدة</span>
+                          <span className="admin-label-hint">(إذا تُرك فارغاً يُستخدم اسم المنشأة أعلاه)</span>
+                        </label>
+                        <div className="admin-input-wrap">
+                          <span className="admin-input-icon admin-input-icon-yellow">🏢</span>
+                          <input
+                            type="text"
+                            name="beneficiaryCompanyName"
+                            value={formData.beneficiaryCompanyName || ''}
+                            onChange={handleChange}
+                            className="admin-input admin-input-yellow"
+                            placeholder="مثال: شركة كويا اند كومباني كونستركشن السعودية للمقاولات"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="admin-label" style={{ color: '#854d0e' }}>
+                          <span>رقم المنشأة المستفيدة</span>
+                          <span className="admin-label-hint">مثال: 15-1953810</span>
+                        </label>
+                        <div className="admin-input-wrap">
+                          <span className="admin-input-icon admin-input-icon-yellow">#</span>
+                          <input
+                            type="text"
+                            name="beneficiaryCompanyNumber"
+                            value={formData.beneficiaryCompanyNumber || ''}
+                            onChange={handleChange}
+                            className="admin-input admin-input-yellow"
+                            placeholder="15-1953810"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Istiqdam Company (شركة الإستقدام) */}
+                    <div style={{ marginTop: '20px', marginBottom: '16px', fontWeight: 700, color: '#713f12', fontSize: '15px' }}>
+                      🤝 بيانات شركة الإستقدام (الكرت الثالث في الصفحة الجديدة):
+                    </div>
+                    <div className="admin-form-row">
+                      <div>
+                        <label className="admin-label" style={{ color: '#854d0e' }}>
+                          <span>اسم شركة الإستقدام</span>
+                          <span className="admin-label-hint">مثال: شركة مصادر لخدمات الموارد البشرية</span>
+                        </label>
+                        <div className="admin-input-wrap">
+                          <span className="admin-input-icon admin-input-icon-yellow">🤝</span>
+                          <input
+                            type="text"
+                            name="istiqdamCompanyName"
+                            value={formData.istiqdamCompanyName || ''}
+                            onChange={handleChange}
+                            className="admin-input admin-input-yellow"
+                            placeholder="شركة مصادر لخدمات الموارد البشرية"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="admin-label" style={{ color: '#854d0e' }}>
+                          <span>رقم شركة الإستقدام</span>
+                          <span className="admin-label-hint">مثال: 15-1590999</span>
+                        </label>
+                        <div className="admin-input-wrap">
+                          <span className="admin-input-icon admin-input-icon-yellow">#</span>
+                          <input
+                            type="text"
+                            name="istiqdamCompanyNumber"
+                            value={formData.istiqdamCompanyNumber || ''}
+                            onChange={handleChange}
+                            className="admin-input admin-input-yellow"
+                            placeholder="15-1590999"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Extra: Canceled Date & Page Title */}
+                    <div style={{ marginTop: '20px', marginBottom: '16px', fontWeight: 700, color: '#713f12', fontSize: '15px' }}>
+                      ⚙️ خيارات إضافية للتصريح الجديد:
+                    </div>
+                    <div className="admin-form-row">
+                      <div>
+                        <label className="admin-label" style={{ color: '#854d0e' }}>
+                          <span>تاريخ إلغاء التصريح (اختياري)</span>
+                          <span className="admin-label-hint">يظهر فقط في حال كان التصريح ملغياً</span>
+                        </label>
+                        <div className="admin-input-wrap">
+                          <span className="admin-input-icon admin-input-icon-yellow">📅</span>
+                          <input
+                            type="date"
+                            name="canceledAt"
+                            value={formData.canceledAt || ''}
+                            onChange={handleChange}
+                            className="admin-input admin-input-yellow"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="admin-label" style={{ color: '#854d0e' }}>
+                          <span>عنوان الصفحة لصفحة قوى الجديدة</span>
+                          <span className="admin-label-hint">الافتراضي: تصريح أجير لحلول الموارد البشرية</span>
+                        </label>
+                        <div className="admin-input-wrap">
+                          <span className="admin-input-icon admin-input-icon-yellow">🏷️</span>
+                          <input
+                            type="text"
+                            name="newNoticePageTitle"
+                            value={formData.newNoticePageTitle || ''}
+                            onChange={handleChange}
+                            className="admin-input admin-input-yellow"
+                            placeholder="تصريح أجير لحلول الموارد البشرية"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Captcha Verification Modal Toggle */}
+                    <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px dashed #fde047' }}>
+                      <label className="admin-label" style={{ color: '#854d0e', fontWeight: 700, fontSize: '14.5px' }}>
+                        <span>🛡️ التحقق من الكابتشا (Captcha Modal):</span>
+                        <span className="admin-label-hint">(تظهر شاشة التحقق من الكابتشا قبل عرض تفاصيل التصريح كما في موقع قوى الرسمي)</span>
+                      </label>
+                      <div style={{ display: 'flex', gap: '24px', alignItems: 'center', marginTop: '8px', flexWrap: 'wrap' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#854d0e', fontWeight: 600 }}>
+                          <input
+                            type="radio"
+                            name="enableCaptcha"
+                            checked={formData.enableCaptcha !== false}
+                            onChange={() => setFormData((prev) => ({ ...prev, enableCaptcha: true }))}
+                            style={{ accentColor: '#ca8a04', width: '18px', height: '18px' }}
+                          />
+                          <span>نعم، تفعيل شاشة الكابتشا الرسمية (مطابق 100% لموقع قوى)</span>
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#4b5563' }}>
+                          <input
+                            type="radio"
+                            name="enableCaptcha"
+                            checked={formData.enableCaptcha === false}
+                            onChange={() => setFormData((prev) => ({ ...prev, enableCaptcha: false }))}
+                            style={{ accentColor: '#ca8a04', width: '18px', height: '18px' }}
+                          />
+                          <span>تخطي الكابتشا وعرض التصريح مباشرة</span>
+                        </label>
+                      </div>
+
+                      {formData.enableCaptcha !== false && (
+                        <div style={{ marginTop: '14px' }}>
+                          <label className="admin-label" style={{ color: '#854d0e', fontSize: '13px' }}>
+                            <span>مفتاح Google reCAPTCHA v2 Site Key:</span>
+                            <span className="admin-label-hint">(مفتاح جوجل الحقيقي الفعال - أو اتركه على الافتراضي الشامل)</span>
+                          </label>
+                          <div className="admin-input-wrap">
+                            <span className="admin-input-icon admin-input-icon-yellow">🔑</span>
+                            <input
+                              type="text"
+                              name="recaptchaSiteKey"
+                              value={formData.recaptchaSiteKey || ''}
+                              onChange={handleChange}
+                              className="admin-input admin-input-yellow"
+                              placeholder="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+                              style={{ direction: 'ltr' }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </section>
+
                 {/* Primary Save Button */}
                 <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center', gap: '12px' }}>
                   {editingToken && (
@@ -917,7 +1229,7 @@ export default function AdminPage() {
                   )}
                   <button
                     type="submit"
-                    disabled={saving || loading}
+                    disabled={saving}
                     className="admin-btn admin-btn-primary"
                     style={{ minWidth: '320px', padding: '14px 28px', fontSize: '16px', borderRadius: '12px' }}
                   >
@@ -1460,7 +1772,7 @@ export default function AdminPage() {
                   </button>
                   <button
                     type="submit"
-                    disabled={saving || loading}
+                    disabled={saving}
                     className="admin-btn admin-btn-primary"
                     style={{ minWidth: '340px', padding: '14px 28px', fontSize: '16px', borderRadius: '12px' }}
                   >
@@ -1541,9 +1853,11 @@ export default function AdminPage() {
                           {filteredHistory.map((item, idx) => {
                             const origin = typeof window !== 'undefined' ? window.location.origin : '';
                             const itemUrl = item.url || `${origin}/notice-verification/${item.token}`;
+                            const itemNewUrl = item.newUrl || `${origin}/notices/${item.token}`;
                             const isValid = item.isValid !== false && (!item.statusText || item.statusText.includes('ساري'));
                             const isBeingDeleted = deletingToken === item.token;
-                            const isCopied = copiedToken === item.token;
+                            const isCopiedClassic = copiedToken === `${item.token}_classic`;
+                            const isCopiedNew = copiedToken === `${item.token}_new`;
 
                             return (
                               <tr key={item.token || idx}>
@@ -1575,19 +1889,30 @@ export default function AdminPage() {
                                     : '-'}
                                 </td>
                                 <td>
-                                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                                    {/* 1. Copy Link Icon */}
+                                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                    {/* 1. Copy Classic Link */}
                                     <button
                                       type="button"
-                                      onClick={() => handleCopyLink(itemUrl, item.token)}
+                                      onClick={() => handleCopyLink(itemUrl, `${item.token}_classic`)}
                                       className="admin-action-btn admin-action-btn-copy"
-                                      title="نسخ رابط التحقق لإرساله للعميل"
+                                      title="نسخ رابط صفحة التحقق الكلاسيكية (الموقع الحالي)"
                                     >
                                       <span>📋</span>
-                                      <span>{isCopied ? 'تم النسخ ✓' : 'نسخ الرابط'}</span>
+                                      <span>{isCopiedClassic ? 'تم النسخ ✓' : 'نسخ الكلاسيكي'}</span>
                                     </button>
 
-                                    {/* 2. Edit Icon */}
+                                    {/* 2. Copy New Qiwa Link (Yellow Distinct Style) */}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleCopyLink(itemNewUrl, `${item.token}_new`)}
+                                      className="admin-action-btn admin-action-btn-copy-yellow"
+                                      title="نسخ رابط صفحة أجير قوى الجديدة المطابق للموقع المرفق"
+                                    >
+                                      <span>🟡</span>
+                                      <span>{isCopiedNew ? 'تم النسخ ✓' : 'نسخ قوى الجديد'}</span>
+                                    </button>
+
+                                    {/* 3. Edit Icon */}
                                     <button
                                       type="button"
                                       onClick={() => handleEdit(item)}
@@ -1598,7 +1923,7 @@ export default function AdminPage() {
                                       <span>تعديل</span>
                                     </button>
 
-                                    {/* 3. Delete Icon */}
+                                    {/* 4. Delete Icon */}
                                     <button
                                       type="button"
                                       onClick={() => handleDelete(item)}
@@ -1610,15 +1935,27 @@ export default function AdminPage() {
                                       <span>{isBeingDeleted ? 'جارٍ الحذف...' : 'حذف'}</span>
                                     </button>
 
-                                    {/* 4. Open in new tab Icon */}
+                                    {/* 5. Open Classic tab Icon */}
                                     <a
                                       href={itemUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="admin-action-btn admin-action-btn-view"
-                                      title="فتح ومعاينة صفحة التحقق في نافذة جديدة"
+                                      title="فتح رابط التصميم الكلاسيكي في نافذة جديدة"
                                     >
-                                      <span>↗</span>
+                                      <span>↗ كلاسيكي</span>
+                                    </a>
+
+                                    {/* 6. Open New Qiwa tab Icon */}
+                                    <a
+                                      href={itemNewUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="admin-action-btn"
+                                      style={{ background: '#fef08a', color: '#713f12', border: '1px solid #eab308', fontWeight: 700, padding: '4px 8px', borderRadius: '6px', fontSize: '11px', textDecoration: 'none' }}
+                                      title="فتح رابط تصميم قوى الجديد في نافذة جديدة"
+                                    >
+                                      <span>↗ قوى الجديد</span>
                                     </a>
                                   </div>
                                 </td>
@@ -1633,8 +1970,7 @@ export default function AdminPage() {
               </section>
             )}
           </div>
-        )}
-      </main>
-    </div>
-  );
-}
+        </main>
+      </div>
+    );
+  }

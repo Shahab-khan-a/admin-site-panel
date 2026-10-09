@@ -1,11 +1,11 @@
 import { redirect } from 'next/navigation';
-import VerificationView from '../../../components/VerificationView';
+import AjeerNoticeView from '../../../components/AjeerNoticeView';
 import { parseTokenData } from '../../../lib/token';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function NoticeVerificationPage({ params }) {
+export default async function QiwaNoticeTokenPage({ params }) {
   const resolvedParams = await params;
   const token = resolvedParams?.token;
 
@@ -15,5 +15,5 @@ export default async function NoticeVerificationPage({ params }) {
 
   const tokenData = await parseTokenData(token);
 
-  return <VerificationView tokenData={tokenData} tokenId={token} />;
+  return <AjeerNoticeView tokenData={tokenData} tokenId={token} />;
 }

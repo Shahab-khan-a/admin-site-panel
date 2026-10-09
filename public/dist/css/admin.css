@@ -1117,3 +1117,78 @@
   transform: scale(1.15);
 }
 
+/* ===================================================
+   NEW AJEER QIWA EXTRA INPUTS & DUAL LINKS (YELLOW THEME)
+   =================================================== */
+
+.admin-card-yellow {
+  border: 3px solid #eab308 !important;
+  background-color: #fffdf0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 20px rgba(234, 179, 8, 0.15) !important;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.admin-card-yellow-header {
+  background-color: #fef08a !important;
+  border-bottom: 2px solid #facc15 !important;
+  padding: 16px 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+
+.admin-card-yellow-title {
+  color: #713f12 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+}
+
+.admin-input-yellow {
+  border: 2px solid #eab308 !important;
+  background-color: #ffffff !important;
+  color: #713f12 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 0 0 1px #fef08a !important;
+  font-weight: 600 !important;
+}
+
+.admin-input-yellow:focus {
+  border-color: #ca8a04 !important;
+  box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.35) !important;
+  background-color: #fffbeb !important;
+}
+
+.admin-input-yellow::placeholder {
+  color: #a16207 !important;
+  opacity: 0.6;
+}
+
+.admin-input-icon-yellow {
+  background-color: #fef08a !important;
+  color: #854d0e !important;
+  border-left: 2px solid #facc15 !important;
+  font-weight: 700 !important;
+}
+
+.admin-action-btn-copy-yellow {
+  background-color: #fef08a !important;
+  color: #854d0e !important;
+  border: 1px solid #eab308 !important;
+  font-weight: 700 !important;
+}
+
+.admin-action-btn-copy-yellow:hover {
+  background-color: #fde047 !important;
+  color: #713f12 !important;
+  border-color: #ca8a04 !important;
+}
+
+
