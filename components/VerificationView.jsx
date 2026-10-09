@@ -30,14 +30,16 @@ export default function VerificationView({ tokenData, tokenId }) {
       if (firestoreData) {
         setData((prev) => ({
           ...prev,
-          ...firestoreData
+          ...firestoreData,
         }));
       }
     }, targetDocId);
 
     return () => {
       if (typeof unsubscribe === 'function') {
-        unsubscribe();
+        try {
+          unsubscribe();
+        } catch (e) {}
       }
     };
   }, [tokenId]);
@@ -190,16 +192,26 @@ export default function VerificationView({ tokenData, tokenId }) {
                   {/* Footer Col 1 */}
                   <div className="col-md-3">
                     <div className="mainFooter__topNavTitle mt-5 mt-sm-5 mt-md-0 mt-lg-0 mt-xl-0">
-                      {data.footerCol1Title}
+                      {data.footerCol1Title || "أجير"}
                     </div>
                     <p>
-                      <a href={data.footerLink1Url} className="mainFooter__topNavLink">
-                        {data.footerLink1Text}
+                      <a
+                        href={data.footerLink1Url || "#"}
+                        className="mainFooter__topNavLink"
+                        target={data.footerLink1Url?.startsWith('http') ? "_blank" : undefined}
+                        rel={data.footerLink1Url?.startsWith('http') ? "noopener noreferrer" : undefined}
+                      >
+                        {data.footerLink1Text || "عن أجير"}
                       </a>
                     </p>
                     <p>
-                      <a href={data.footerLink2Url} className="mainFooter__topNavLink">
-                        {data.footerLink2Text}
+                      <a
+                        href={data.footerLink2Url || "#"}
+                        className="mainFooter__topNavLink"
+                        target={data.footerLink2Url?.startsWith('http') ? "_blank" : undefined}
+                        rel={data.footerLink2Url?.startsWith('http') ? "noopener noreferrer" : undefined}
+                      >
+                        {data.footerLink2Text || "خدمات أجير"}
                       </a>
                     </p>
                   </div>
@@ -207,16 +219,26 @@ export default function VerificationView({ tokenData, tokenId }) {
                   {/* Footer Col 2 */}
                   <div className="col-md-3">
                     <div className="mainFooter__topNavTitle mt-5 mt-sm-5 mt-md-0 mt-lg-0 mt-xl-0">
-                      {data.footerCol2Title}
+                      {data.footerCol2Title || "الدعم"}
                     </div>
                     <p>
-                      <a href={data.footerLink3Url} className="mainFooter__topNavLink">
-                        {data.footerLink3Text}
+                      <a
+                        href={data.footerLink3Url || "#"}
+                        className="mainFooter__topNavLink"
+                        target={data.footerLink3Url?.startsWith('http') ? "_blank" : undefined}
+                        rel={data.footerLink3Url?.startsWith('http') ? "noopener noreferrer" : undefined}
+                      >
+                        {data.footerLink3Text || "الدعم و المساعدة"}
                       </a>
                     </p>
                     <p>
-                      <a href={data.footerLink4Url} className="mainFooter__topNavLink">
-                        {data.footerLink4Text}
+                      <a
+                        href={data.footerLink4Url || "#"}
+                        className="mainFooter__topNavLink"
+                        target={data.footerLink4Url?.startsWith('http') ? "_blank" : undefined}
+                        rel={data.footerLink4Url?.startsWith('http') ? "noopener noreferrer" : undefined}
+                      >
+                        {data.footerLink4Text || "الأسئلة الشائعة"}
                       </a>
                     </p>
                   </div>
@@ -224,16 +246,26 @@ export default function VerificationView({ tokenData, tokenId }) {
                   {/* Footer Col 3 */}
                   <div className="col-md-3">
                     <div className="mainFooter__topNavTitle mt-5 mt-sm-5 mt-md-0 mt-lg-0 mt-xl-0">
-                      {data.footerCol3Title}
+                      {data.footerCol3Title || "الشروط و الخصوصية"}
                     </div>
                     <p>
-                      <a href={data.footerLink5Url} className="mainFooter__topNavLink">
-                        {data.footerLink5Text}
+                      <a
+                        href={data.footerLink5Url || "#"}
+                        className="mainFooter__topNavLink"
+                        target={data.footerLink5Url?.startsWith('http') ? "_blank" : undefined}
+                        rel={data.footerLink5Url?.startsWith('http') ? "noopener noreferrer" : undefined}
+                      >
+                        {data.footerLink5Text || "الشروط والأحكام"}
                       </a>
                     </p>
                     <p>
-                      <a href={data.footerLink6Url} className="mainFooter__topNavLink">
-                        {data.footerLink6Text}
+                      <a
+                        href={data.footerLink6Url || "#"}
+                        className="mainFooter__topNavLink"
+                        target={data.footerLink6Url?.startsWith('http') ? "_blank" : undefined}
+                        rel={data.footerLink6Url?.startsWith('http') ? "noopener noreferrer" : undefined}
+                      >
+                        {data.footerLink6Text || "سياسة الخصوصية"}
                       </a>
                     </p>
                   </div>
@@ -241,14 +273,15 @@ export default function VerificationView({ tokenData, tokenId }) {
                   {/* Footer Col 4 */}
                   <div className="col-md-3">
                     <div className="mainFooter__topNavTitle mt-5 mt-sm-5 mt-md-0 mt-lg-0 mt-xl-0">
-                      {data.footerCol4Title}
+                      {data.footerCol4Title || "تواصل معنا"}
                     </div>
                     <p>
                       <a
-                        href={data.footerTwitterUrl}
+                        href={data.footerTwitterUrl || "https://twitter.com/AjeerSA"}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="mainFooter__socialsLink d-inline-block px-2"
+                        title="Twitter / X"
                       >
                         <img
                           src="/dist/img/x-twitter.svg"
@@ -257,18 +290,22 @@ export default function VerificationView({ tokenData, tokenId }) {
                         />
                       </a>
                       <a
-                        href={`mailto:${data.footerSupportEmail}`}
-                        aria-label={`تواصل معنا عبر البريد الإلكتروني ${data.footerSupportEmail}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        href={data.footerTelegramUrl || (data.footerSupportEmail ? (data.footerSupportEmail.startsWith('mailto:') || data.footerSupportEmail.startsWith('http') ? data.footerSupportEmail : `mailto:${data.footerSupportEmail}`) : '#')}
+                        aria-label="تواصل معنا"
+                        target={data.footerTelegramUrl?.startsWith('http') ? "_blank" : undefined}
+                        rel={data.footerTelegramUrl?.startsWith('http') ? "noopener noreferrer" : undefined}
                         className="mainFooter__socialsLink d-inline-block px-2"
+                        title="Telegram / Send"
                       >
                         <i className="icon-send footer-send-icon"></i>
                       </a>
                       <a
-                        href={`tel:${data.footerSupportPhone}`}
-                        aria-label={`تواصل معنا عبر الهاتف ${data.footerSupportPhone}`}
+                        href={data.footerPhoneUrl || (data.footerSupportPhone ? (data.footerSupportPhone.startsWith('tel:') || data.footerSupportPhone.startsWith('http') ? data.footerSupportPhone : `tel:${data.footerSupportPhone}`) : '#')}
+                        aria-label={`تواصل معنا عبر الهاتف ${data.footerSupportPhone || ''}`}
+                        target={data.footerPhoneUrl?.startsWith('http') ? "_blank" : undefined}
+                        rel={data.footerPhoneUrl?.startsWith('http') ? "noopener noreferrer" : undefined}
                         className="mainFooter__socialsLink d-inline-block px-2"
+                        title="اتصال هاتفي"
                       >
                         <i className="icon-phone footer-phone-icon"></i>
                       </a>

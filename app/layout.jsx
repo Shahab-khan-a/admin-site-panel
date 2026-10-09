@@ -41,8 +41,14 @@ export default function RootLayout({ children }) {
                     var a = arguments[i];
                     str += (a && a.message ? a.message : String(a)) + " ";
                   }
-                  if (str.indexOf("bis_skin_checked") !== -1 || (str.indexOf("hydrated") !== -1 && str.indexOf("didn't match") !== -1)) {
-                    return; // Silently ignore extension hydration warnings
+                  if (
+                    str.indexOf("bis_skin_checked") !== -1 ||
+                    str.indexOf("hydrated") !== -1 ||
+                    str.indexOf("content.js") !== -1 ||
+                    str.indexOf("onGetInitConfig") !== -1 ||
+                    str.indexOf("WebChannelConnection") !== -1
+                  ) {
+                    return; // Silently ignore extension errors and WebChannel reconnect messages
                   }
                   _origError.apply(console, arguments);
                 };
