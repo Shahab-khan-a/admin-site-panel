@@ -25,10 +25,28 @@ export default function AdminPage() {
   const [copiedToken, setCopiedToken] = useState(null);
   const [historyList, setHistoryList] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [historyViewMode, setHistoryViewMode] = useState('table'); // 'table' | 'grid' | 'detailed'
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== 'undefined') {
+      try {
+        const savedMode = localStorage.getItem('admin_history_view_mode');
+        if (savedMode === 'table' || savedMode === 'grid' || savedMode === 'detailed') {
+          setHistoryViewMode(savedMode);
+        }
+      } catch (e) {}
+    }
   }, []);
+
+  const handleViewModeChange = (mode) => {
+    setHistoryViewMode(mode);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('admin_history_view_mode', mode);
+      } catch (e) {}
+    }
+  };
 
   // Fetch initial data & links history directly from Firestore on mount
   useEffect(() => {
@@ -1815,17 +1833,68 @@ export default function AdminPage() {
                 </div>
 
                 <div className="admin-card-body">
-                  {/* Search Bar */}
+                  {/* Search Bar + 3 View Switcher Icons */}
                   {historyList.length > 0 && (
-                    <div style={{ marginBottom: '16px' }}>
-                      <input
-                        type="text"
-                        placeholder="🔍 ابحث برقم التصريح، اسم العامل، رقم الإقامة، أو المنشأة..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="admin-input no-icon"
-                        style={{ padding: '10px 16px', fontSize: '14px', borderRadius: '8px' }}
-                      />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '18px' }}>
+                      <div style={{ flex: '1 1 320px', minWidth: '240px' }}>
+                        <input
+                          type="text"
+                          placeholder="🔍 ابحث برقم التصريح، اسم العامل، رقم الإقامة، أو المنشأة..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="admin-input no-icon"
+                          style={{ padding: '10px 16px', fontSize: '14px', borderRadius: '8px', width: '100%' }}
+                        />
+                      </div>
+
+                      {/* 3 View Switcher Buttons */}
+                      <div className="admin-view-switcher">
+                        <button
+                          type="button"
+                          onClick={() => handleViewModeChange('table')}
+                          className={`admin-view-mode-btn ${historyViewMode === 'table' ? 'active' : ''}`}
+                          title="عرض القائمة والجدول المنظّم"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                            <line x1="8" y1="18" x2="21" y2="18"></line>
+                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                          </svg>
+                          <span>قائمة</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleViewModeChange('grid')}
+                          className={`admin-view-mode-btn ${historyViewMode === 'grid' ? 'active' : ''}`}
+                          title="عرض الشبكة (كروت مربعة)"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                          </svg>
+                          <span>شبكة</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleViewModeChange('detailed')}
+                          className={`admin-view-mode-btn ${historyViewMode === 'detailed' ? 'active' : ''}`}
+                          title="عرض تفصيلي (فورم وبطاقات كاملة)"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <line x1="10" y1="9" x2="8" y2="9"></line>
+                          </svg>
+                          <span>فورم تفصيلي</span>
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -1836,7 +1905,8 @@ export default function AdminPage() {
                         ? 'لا توجد تصاريح محفوظة في Firebase بعد. قم بتعبئة النموذج واضغط "حفظ" لإنشاء أول تصريح.'
                         : 'لا توجد نتائج تطابق بحثك.'}
                     </div>
-                  ) : (
+                  ) : historyViewMode === 'table' ? (
+                    /* 1. TABLE / LIST FORMAT */
                     <div style={{ overflowX: 'auto' }}>
                       <table className="admin-history-table">
                         <thead>
@@ -1862,10 +1932,15 @@ export default function AdminPage() {
                             return (
                               <tr key={item.token || idx}>
                                 <td>
-                                  <strong>{item.noticeNumber || '-'}</strong>
+                                  <strong>#{item.noticeNumber || '-'}</strong>
                                 </td>
-                                <td>{item.workerName || '-'}</td>
-                                <td>{item.facilityName || '-'}</td>
+                                <td>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span>👤</span>
+                                    <span>{item.workerName || '-'}</span>
+                                  </div>
+                                </td>
+                                <td>{item.facilityName || item.beneficiaryCompanyName || '-'}</td>
                                 <td>
                                   <span
                                     style={{
@@ -1890,70 +1965,59 @@ export default function AdminPage() {
                                 </td>
                                 <td>
                                   <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-                                    {/* 1. Copy Classic Link */}
                                     <button
                                       type="button"
                                       onClick={() => handleCopyLink(itemUrl, `${item.token}_classic`)}
                                       className="admin-action-btn admin-action-btn-copy"
-                                      title="نسخ رابط صفحة التحقق الكلاسيكية (الموقع الحالي)"
+                                      title="نسخ رابط صفحة التحقق الكلاسيكية"
                                     >
                                       <span>📋</span>
                                       <span>{isCopiedClassic ? 'تم النسخ ✓' : 'نسخ الكلاسيكي'}</span>
                                     </button>
-
-                                    {/* 2. Copy New Qiwa Link (Yellow Distinct Style) */}
                                     <button
                                       type="button"
                                       onClick={() => handleCopyLink(itemNewUrl, `${item.token}_new`)}
                                       className="admin-action-btn admin-action-btn-copy-yellow"
-                                      title="نسخ رابط صفحة أجير قوى الجديدة المطابق للموقع المرفق"
+                                      title="نسخ رابط صفحة قوى الجديدة"
                                     >
                                       <span>🟡</span>
                                       <span>{isCopiedNew ? 'تم النسخ ✓' : 'نسخ قوى الجديد'}</span>
                                     </button>
-
-                                    {/* 3. Edit Icon */}
                                     <button
                                       type="button"
                                       onClick={() => handleEdit(item)}
                                       className="admin-action-btn admin-action-btn-edit"
-                                      title="تعديل هذا التصريح وتحديثه في Firebase"
+                                      title="تعديل هذا التصريح"
                                     >
                                       <span>✏️</span>
                                       <span>تعديل</span>
                                     </button>
-
-                                    {/* 4. Delete Icon */}
                                     <button
                                       type="button"
                                       onClick={() => handleDelete(item)}
                                       disabled={isBeingDeleted}
                                       className="admin-action-btn admin-action-btn-delete"
-                                      title="حذف هذا التصريح نهائياً من Firebase"
+                                      title="حذف هذا التصريح"
                                     >
                                       <span>🗑️</span>
                                       <span>{isBeingDeleted ? 'جارٍ الحذف...' : 'حذف'}</span>
                                     </button>
-
-                                    {/* 5. Open Classic tab Icon */}
                                     <a
                                       href={itemUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="admin-action-btn admin-action-btn-view"
-                                      title="فتح رابط التصميم الكلاسيكي في نافذة جديدة"
+                                      title="فتح رابط التصميم الكلاسيكي"
                                     >
                                       <span>↗ كلاسيكي</span>
                                     </a>
-
-                                    {/* 6. Open New Qiwa tab Icon */}
                                     <a
                                       href={itemNewUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="admin-action-btn"
                                       style={{ background: '#fef08a', color: '#713f12', border: '1px solid #eab308', fontWeight: 700, padding: '4px 8px', borderRadius: '6px', fontSize: '11px', textDecoration: 'none' }}
-                                      title="فتح رابط تصميم قوى الجديد في نافذة جديدة"
+                                      title="فتح رابط تصميم قوى الجديد"
                                     >
                                       <span>↗ قوى الجديد</span>
                                     </a>
@@ -1964,6 +2028,312 @@ export default function AdminPage() {
                           })}
                         </tbody>
                       </table>
+                    </div>
+                  ) : historyViewMode === 'grid' ? (
+                    /* 2. GRID / CARDS FORMAT */
+                    <div className="admin-history-grid">
+                      {filteredHistory.map((item, idx) => {
+                        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+                        const itemUrl = item.url || `${origin}/notice-verification/${item.token}`;
+                        const itemNewUrl = item.newUrl || `${origin}/notices/${item.token}`;
+                        const isValid = item.isValid !== false && (!item.statusText || item.statusText.includes('ساري'));
+                        const isBeingDeleted = deletingToken === item.token;
+                        const isCopiedClassic = copiedToken === `${item.token}_classic`;
+                        const isCopiedNew = copiedToken === `${item.token}_new`;
+
+                        return (
+                          <div key={item.token || idx} className="admin-history-grid-card">
+                            <div className="admin-grid-card-header">
+                              <span style={{ fontWeight: 800, color: '#1f2548', fontSize: '15px' }}>
+                                #{item.noticeNumber || '-'}
+                              </span>
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  padding: '3px 10px',
+                                  borderRadius: '16px',
+                                  fontSize: '11.5px',
+                                  fontWeight: 700,
+                                  background: isValid ? '#dcfce7' : '#fee2e2',
+                                  color: isValid ? '#15803d' : '#b91c1c',
+                                }}
+                              >
+                                {item.statusText || (isValid ? 'ساري / فعال' : 'منتهي / ملغي')}
+                              </span>
+                            </div>
+
+                            <div className="admin-grid-card-body">
+                              <div style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span>👤</span>
+                                <span>{item.workerName || '-'}</span>
+                              </div>
+                              <div style={{ fontSize: '13px', color: '#475569' }}>
+                                🏢 <strong>المنشأة:</strong> {item.facilityName || item.beneficiaryCompanyName || '-'}
+                              </div>
+                              {item.istiqdamCompanyName && (
+                                <div style={{ fontSize: '12.5px', color: '#64748b' }}>
+                                  🏛️ <strong>الاستقدام:</strong> {item.istiqdamCompanyName}
+                                </div>
+                              )}
+                              <div style={{ fontSize: '12px', color: '#64748b', background: '#f8fafc', padding: '6px 10px', borderRadius: '6px' }}>
+                                📅 <strong>الصلاحية:</strong> {item.startDate || '-'} إلى {item.endDate || '-'}
+                              </div>
+                            </div>
+
+                            <div className="admin-grid-card-footer">
+                              {/* Row 1: Copy Links */}
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyLink(itemUrl, `${item.token}_classic`)}
+                                  className="admin-action-btn admin-action-btn-copy"
+                                  style={{ flex: 1, justifyContent: 'center' }}
+                                >
+                                  <span>📋</span>
+                                  <span>{isCopiedClassic ? 'تم النسخ ✓' : 'نسخ الكلاسيكي'}</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyLink(itemNewUrl, `${item.token}_new`)}
+                                  className="admin-action-btn admin-action-btn-copy-yellow"
+                                  style={{ flex: 1, justifyContent: 'center' }}
+                                >
+                                  <span>🟡</span>
+                                  <span>{isCopiedNew ? 'تم النسخ ✓' : 'نسخ قوى'}</span>
+                                </button>
+                              </div>
+
+                              {/* Row 2: Actions & Opens */}
+                              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleEdit(item)}
+                                    className="admin-action-btn admin-action-btn-edit"
+                                    title="تعديل"
+                                  >
+                                    <span>✏️</span>
+                                    <span>تعديل</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDelete(item)}
+                                    disabled={isBeingDeleted}
+                                    className="admin-action-btn admin-action-btn-delete"
+                                    title="حذف"
+                                  >
+                                    <span>🗑️</span>
+                                    <span>{isBeingDeleted ? '...' : 'حذف'}</span>
+                                  </button>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                  <a
+                                    href={itemUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="admin-action-btn admin-action-btn-view"
+                                    title="فتح كلاسيكي"
+                                  >
+                                    <span>↗ كلاسيكي</span>
+                                  </a>
+                                  <a
+                                    href={itemNewUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="admin-action-btn"
+                                    style={{ background: '#fef08a', color: '#713f12', border: '1px solid #eab308', fontWeight: 700, padding: '4px 8px', borderRadius: '6px', fontSize: '11px', textDecoration: 'none' }}
+                                    title="فتح قوى"
+                                  >
+                                    <span>↗ قوى</span>
+                                  </a>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    /* 3. DETAILED FORM / SHEET FORMAT */
+                    <div className="admin-history-detailed-list">
+                      {filteredHistory.map((item, idx) => {
+                        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+                        const itemUrl = item.url || `${origin}/notice-verification/${item.token}`;
+                        const itemNewUrl = item.newUrl || `${origin}/notices/${item.token}`;
+                        const isValid = item.isValid !== false && (!item.statusText || item.statusText.includes('ساري'));
+                        const isBeingDeleted = deletingToken === item.token;
+                        const isCopiedClassic = copiedToken === `${item.token}_classic`;
+                        const isCopiedNew = copiedToken === `${item.token}_new`;
+
+                        return (
+                          <div key={item.token || idx} className="admin-history-detailed-card">
+                            {/* Card Header Banner */}
+                            <div className="admin-detailed-card-header">
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span style={{ fontSize: '20px' }}>📋</span>
+                                <div>
+                                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>
+                                    تصريح رقم #{item.noticeNumber || '-'}
+                                  </h3>
+                                  <span style={{ fontSize: '12px', color: '#64748b' }}>
+                                    {item.createdAt ? `تاريخ الإنشاء: ${new Date(item.createdAt).toLocaleString('ar-SA')}` : ''}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  padding: '5px 14px',
+                                  borderRadius: '20px',
+                                  fontSize: '13px',
+                                  fontWeight: 800,
+                                  background: isValid ? '#dcfce7' : '#fee2e2',
+                                  color: isValid ? '#15803d' : '#b91c1c',
+                                  border: `1px solid ${isValid ? '#86efac' : '#fca5a5'}`,
+                                }}
+                              >
+                                {item.statusText || (isValid ? 'ساري / فعال' : 'منتهي / ملغي')}
+                              </span>
+                            </div>
+
+                            {/* Card Detailed Body */}
+                            <div className="admin-detailed-card-body">
+                              {/* 4-Box Structured Grid */}
+                              <div className="admin-detailed-grid-fields">
+                                <div className="admin-detailed-field-box">
+                                  <div className="admin-detailed-field-title">👤 بيانات العامل</div>
+                                  <div className="admin-detailed-field-val">{item.workerName || '-'}</div>
+                                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                                    الإقامة: {item.iqamaNumber || '-'} | المهنة: {item.occupation || '-'}
+                                  </div>
+                                </div>
+
+                                <div className="admin-detailed-field-box">
+                                  <div className="admin-detailed-field-title">📅 صلاحية التصريح</div>
+                                  <div className="admin-detailed-field-val">
+                                    {item.startDate || '-'} إلى {item.endDate || '-'}
+                                  </div>
+                                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                                    النوع: {item.noticeType || 'تصريح إعارة أجير'}
+                                  </div>
+                                </div>
+
+                                <div className="admin-detailed-field-box">
+                                  <div className="admin-detailed-field-title">🏢 المنشأة المستفيدة</div>
+                                  <div className="admin-detailed-field-val">
+                                    {item.facilityName || item.beneficiaryCompanyName || '-'}
+                                  </div>
+                                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                                    رقم المنشأة: {item.facilityNumber || item.beneficiaryCompanyNumber || '-'}
+                                  </div>
+                                </div>
+
+                                <div className="admin-detailed-field-box">
+                                  <div className="admin-detailed-field-title">🏛️ شركة الاستقدام</div>
+                                  <div className="admin-detailed-field-val">
+                                    {item.istiqdamCompanyName || '-'}
+                                  </div>
+                                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                                    الرقم: {item.istiqdamCompanyNumber || '-'}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Direct Links Bar */}
+                              <div className="admin-detailed-card-links">
+                                {/* Classic Link */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                  <span style={{ fontSize: '12px', fontWeight: 700, color: '#166534', minWidth: '120px' }}>
+                                    🌐 الرابط الكلاسيكي:
+                                  </span>
+                                  <input
+                                    type="text"
+                                    readOnly
+                                    value={itemUrl}
+                                    className="admin-link-input"
+                                    style={{ flex: 1, minWidth: '220px', fontSize: '12px', padding: '6px 10px' }}
+                                    onClick={(e) => e.target.select()}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCopyLink(itemUrl, `${item.token}_classic`)}
+                                    className={`admin-btn-copy ${isCopiedClassic ? 'copied' : ''}`}
+                                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                                  >
+                                    {isCopiedClassic ? 'تم النسخ ✓' : 'نسخ 📋'}
+                                  </button>
+                                  <a
+                                    href={itemUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="admin-btn admin-btn-outline"
+                                    style={{ padding: '6px 10px', fontSize: '12px' }}
+                                  >
+                                    فتح ↗
+                                  </a>
+                                </div>
+
+                                {/* New Qiwa Link */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                  <span style={{ fontSize: '12px', fontWeight: 700, color: '#854d0e', minWidth: '120px' }}>
+                                    🟡 رابط قوى الجديد:
+                                  </span>
+                                  <input
+                                    type="text"
+                                    readOnly
+                                    value={itemNewUrl}
+                                    className="admin-link-input admin-input-yellow"
+                                    style={{ flex: 1, minWidth: '220px', fontSize: '12px', padding: '6px 10px' }}
+                                    onClick={(e) => e.target.select()}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCopyLink(itemNewUrl, `${item.token}_new`)}
+                                    className={`admin-btn-copy admin-action-btn-copy-yellow ${isCopiedNew ? 'copied' : ''}`}
+                                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                                  >
+                                    {isCopiedNew ? 'تم النسخ ✓' : 'نسخ 📋'}
+                                  </button>
+                                  <a
+                                    href={itemNewUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="admin-btn"
+                                    style={{ padding: '6px 10px', fontSize: '12px', background: '#fef08a', color: '#713f12', border: '1px solid #eab308', fontWeight: 700 }}
+                                  >
+                                    فتح ↗
+                                  </a>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Card Footer Toolbar */}
+                            <div className="admin-detailed-card-footer">
+                              <button
+                                type="button"
+                                onClick={() => handleEdit(item)}
+                                className="admin-btn admin-btn-outline"
+                                style={{ padding: '7px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                              >
+                                <span>✏️</span>
+                                <span>تعديل هذا التصريح في النموذج</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(item)}
+                                disabled={isBeingDeleted}
+                                className="admin-btn"
+                                style={{ padding: '7px 16px', fontSize: '13px', background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5', display: 'flex', alignItems: 'center', gap: '6px' }}
+                              >
+                                <span>🗑️</span>
+                                <span>{isBeingDeleted ? 'جارٍ الحذف...' : 'حذف التصريح نهائياً'}</span>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

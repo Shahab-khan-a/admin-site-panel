@@ -6,7 +6,7 @@ import { DEFAULT_NOTICE_DATA } from '../lib/defaultData';
 
 export default function AjeerNoticeView({ tokenData, tokenId }) {
   const [mounted, setMounted] = useState(false);
-  const [lang, setLang] = useState('en'); // Default 'en' matching the provided user screenshots
+  const [lang, setLang] = useState('en'); // Default 'en' matching Picture 1
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
@@ -17,7 +17,6 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
 
   useEffect(() => {
     setMounted(true);
-    // If URL has ?lang=ar or ?lang=en, respect it
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const urlLang = params.get('lang');
@@ -79,7 +78,10 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
 
   // Determine status (active / expired / canceled)
   const isCanceled = !!(data.canceledAt || data.canceled_at);
-  const isValid = !isCanceled && (data.isValid !== false) && (!data.statusText || data.statusText.includes('ساري'));
+  const isExplicitlyExpired =
+    data.isValid === false ||
+    (typeof data.statusText === 'string' && (data.statusText.includes('منتهي') || data.statusText.toLowerCase().includes('expired')));
+  const isValid = !isCanceled && !isExplicitlyExpired && (data.isValid !== false);
   const isExpired = !isCanceled && !isValid;
 
   // Format dates
@@ -91,7 +93,11 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
     return val;
   };
 
-  const laborerName = data.laborer_name || data.laborerName || data.workerName || 'HEMANT KUMAR MANDAL';
+  const laborerName =
+    data.laborer_name ||
+    data.laborerName ||
+    data.workerName ||
+    'HEMANT KUMAR MANDAL';
   const startDateStr = formatDate(data.start_date || data.startDate || '2025-07-28');
   const endDateStr = formatDate(data.expiration_date || data.endDate || '2026-07-17');
   const canceledDateStr = formatDate(data.canceled_at || data.canceledAt || '-');
@@ -130,7 +136,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
         flexDirection: 'column',
         justifyContent: 'space-between',
         backgroundColor: '#edf2f7',
-        fontFamily: 'HelveticaNeue, FrutigerLTArabic-55Roman, Arial, sans-serif',
+        fontFamily: "'FrutigerLTArabic-55Roman', 'HelveticaNeue', -apple-system, BlinkMacSystemFont, Arial, sans-serif",
         color: '#1d2d42',
         position: 'relative',
       }}
@@ -174,7 +180,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
           zIndex: 100,
           backgroundColor: '#ffffff',
           borderBottom: '1px solid #e7ecf3',
-          height: '64px',
+          height: '60px',
           display: 'flex',
           alignItems: 'center',
         }}
@@ -196,7 +202,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
               <img
                 src="/assets/ajeer-logo-B9aR3SS_.svg"
                 alt="Ajeer"
-                style={{ height: '36px', width: 'auto', display: 'block' }}
+                style={{ height: '34px', width: 'auto', display: 'block' }}
               />
             </a>
           </div>
@@ -290,7 +296,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
               }}
               aria-label="Toggle menu"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#152e83" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 {mobileMenuOpen ? (
                   <>
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -313,7 +319,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
           <div
             style={{
               position: 'fixed',
-              top: '64px',
+              top: '60px',
               left: 0,
               right: 0,
               backgroundColor: '#ffffff',
@@ -408,9 +414,10 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
             fontSize: '26px',
             fontWeight: 700,
             color: '#152e83',
-            margin: '0 0 24px 0',
+            margin: '0 0 20px 0',
             textAlign: isRtl ? 'right' : 'left',
-            fontFamily: 'HelveticaNeue, FrutigerLTArabic-65Bold, sans-serif',
+            fontFamily: "'FrutigerLTArabic-65Bold', 'HelveticaNeue', sans-serif",
+            letterSpacing: '-0.2px',
           }}
         >
           {pageTitle}
@@ -429,7 +436,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
                 <div className="ajeer-field-label">
                   {isRtl ? 'اسم الموظف:' : "Laborer's name:"}
                 </div>
-                <div className="ajeer-field-value">
+                <div className="ajeer-field-value ajeer-field-name">
                   {laborerName}
                 </div>
               </div>
@@ -440,19 +447,9 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
                   {isRtl ? 'حالة التصريح:' : 'Permit status:'}
                 </div>
                 <div>
-                  {isValid ? (
-                    <span className="ajeer-badge ajeer-badge-active">
-                      {isRtl ? 'ساري' : 'ACTIVE'}
-                    </span>
-                  ) : isCanceled ? (
-                    <span className="ajeer-badge ajeer-badge-expired">
-                      {isRtl ? 'ملغي' : 'CANCELED'}
-                    </span>
-                  ) : (
-                    <span className="ajeer-badge ajeer-badge-expired">
-                      {isRtl ? 'منتهي' : 'EXPIRED'}
-                    </span>
-                  )}
+                  <span className="ajeer-badge">
+                    {isValid ? (isRtl ? 'ساري' : 'ACTIVE') : isCanceled ? (isRtl ? 'ملغي' : 'CANCELED') : (isRtl ? 'منتهي' : 'EXPIRED')}
+                  </span>
                 </div>
               </div>
 
@@ -499,7 +496,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
                 <div className="ajeer-field-label">
                   {isRtl ? 'اسم المنشأة:' : 'Establishment name:'}
                 </div>
-                <div className="ajeer-field-value" style={{ direction: 'rtl', textAlign: isRtl ? 'right' : 'left' }}>
+                <div className="ajeer-field-value ajeer-field-arabic">
                   {beneficiaryName}
                 </div>
               </div>
@@ -525,7 +522,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
                 <div className="ajeer-field-label">
                   {isRtl ? 'اسم المنشأة:' : 'Establishment name:'}
                 </div>
-                <div className="ajeer-field-value" style={{ direction: 'rtl', textAlign: isRtl ? 'right' : 'left' }}>
+                <div className="ajeer-field-value ajeer-field-arabic">
                   {istiqdamName}
                 </div>
               </div>
@@ -576,7 +573,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
               <img
                 src="/assets/ajeer-logo-B9aR3SS_.svg"
                 alt="Ajeer"
-                style={{ height: '38px', width: 'auto', display: 'block' }}
+                style={{ height: '36px', width: 'auto', display: 'block' }}
               />
             </a>
           </div>
@@ -646,6 +643,47 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
         </div>
       </footer>
 
+      {/* Global font-faces and Next.js dev overlay suppression */}
+      <style jsx global>{`
+        @font-face {
+          font-family: 'FrutigerLTArabic-55Roman';
+          src: url('/assets/FrutigerLTArabic-55Roman-MWBpO6AF.woff') format('woff'),
+               url('/assets/FrutigerLTArabic-55Roman-DcatSmBs.ttf') format('truetype');
+          font-weight: 400;
+          font-style: normal;
+          font-display: swap;
+        }
+
+        @font-face {
+          font-family: 'FrutigerLTArabic-65Bold';
+          src: url('/assets/FrutigerLTArabic-65Bold-JBA9amnD.woff') format('woff'),
+               url('/assets/FrutigerLTArabic-65Bold-DZRczdd_.ttf') format('truetype');
+          font-weight: 700;
+          font-style: normal;
+          font-display: swap;
+        }
+
+        @font-face {
+          font-family: 'HelveticaNeue';
+          src: url('/assets/HelveticaNeue-mIB6uj_W.ttf') format('truetype');
+          font-weight: 400;
+          font-style: normal;
+          font-display: swap;
+        }
+
+        /* Suppress Next.js dev overlay circle icon ("N") completely */
+        nextjs-portal,
+        #nextjs-dev-overlay,
+        div[data-nextjs-dev-indicator],
+        div[data-nextjs-toast],
+        div[data-nextjs-dialog] {
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+        }
+      `}</style>
+
       {/* Scoped CSS Styles for Exact UI Match */}
       <style jsx>{`
         .ajeer-cards-wrapper {
@@ -659,7 +697,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
         .ajeer-card {
           background-color: #ffffff;
           border-radius: 8px;
-          border: 1px solid #e2e8f0;
+          border: 1px solid #eef2fb;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
           display: flex;
           flex-direction: column;
@@ -680,13 +718,14 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
 
         .ajeer-card-header {
           padding: 16px 20px;
-          border-bottom: 1px solid #edf2f7;
+          border-bottom: 1px solid #f1f4f8;
           font-size: 15px;
           font-weight: 700;
           color: #152e83;
           text-transform: uppercase;
           background-color: #ffffff;
-          letter-spacing: 0.5px;
+          letter-spacing: 0.3px;
+          font-family: 'FrutigerLTArabic-65Bold', 'HelveticaNeue', sans-serif;
         }
 
         .ajeer-card-body {
@@ -714,9 +753,21 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
         .ajeer-field-value {
           font-size: 15px;
           font-weight: 600;
-          color: #1e293b;
+          color: #1d2d42;
           word-break: break-word;
           line-height: 1.4;
+          font-family: 'FrutigerLTArabic-55Roman', 'HelveticaNeue', sans-serif;
+        }
+
+        .ajeer-field-name {
+          text-transform: uppercase;
+          letter-spacing: 0.2px;
+        }
+
+        .ajeer-field-arabic {
+          font-family: 'FrutigerLTArabic-55Roman', 'FrutigerLTArabic-65Bold', sans-serif;
+          font-weight: 600;
+          line-height: 1.5;
         }
 
         .ajeer-badge {
@@ -727,16 +778,9 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
           border-radius: 4px;
           text-transform: uppercase;
           width: fit-content;
-        }
-
-        .ajeer-badge-expired {
           background-color: #eef2fb;
           color: #152e83;
-        }
-
-        .ajeer-badge-active {
-          background-color: #00c186;
-          color: #ffffff;
+          letter-spacing: 0.3px;
         }
 
         .ajeer-action-wrapper {
@@ -770,7 +814,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
         }
 
         .ajeer-footer {
-          border-top: 1px solid #e2e8f0;
+          border-top: 1px solid #e7ecf3;
           background-color: #ffffff;
           padding: 36px 20px 28px 20px;
           width: 100%;

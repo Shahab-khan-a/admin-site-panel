@@ -3,6 +3,7 @@ const nextConfig = {
   reactStrictMode: false,
   poweredByHeader: false,
   agentRules: false,
+  devIndicators: false,
   async redirects() {
     return [
       {
