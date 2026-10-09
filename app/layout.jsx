@@ -1,3 +1,4 @@
+import Script from 'next/script';
 import '../public/dist/css/plugins.css';
 import '../public/dist/css/app.css';
 import '../public/dist/css/verification.css';
@@ -29,11 +30,18 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head>
-        <script
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap"
+          rel="stylesheet"
+        />
+        <Script
+          id="suppress-extension-errors"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                // Intercept console.error to silence false-positive extension hydration errors
                 var _origError = console.error;
                 console.error = function() {
                   var str = "";
@@ -46,14 +54,14 @@ export default function RootLayout({ children }) {
                     str.indexOf("hydrated") !== -1 ||
                     str.indexOf("content.js") !== -1 ||
                     str.indexOf("onGetInitConfig") !== -1 ||
-                    str.indexOf("WebChannelConnection") !== -1
+                    str.indexOf("WebChannelConnection") !== -1 ||
+                    str.indexOf("Unexpected end of JSON input") !== -1
                   ) {
-                    return; // Silently ignore extension errors and WebChannel reconnect messages
+                    return;
                   }
                   _origError.apply(console, arguments);
                 };
 
-                // Strip bis_skin_checked attribute before React hydrates
                 if (typeof MutationObserver !== "undefined") {
                   var observer = new MutationObserver(function(mutations) {
                     for (var i = 0; i < mutations.length; i++) {
