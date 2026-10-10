@@ -6,7 +6,7 @@ import { DEFAULT_NOTICE_DATA } from '../lib/defaultData';
 
 export default function AjeerNoticeView({ tokenData, tokenId }) {
   const [mounted, setMounted] = useState(false);
-  const [lang, setLang] = useState('en'); // Default 'en' matching reference
+  const [lang, setLang] = useState('ar'); // Default 'ar' (Arabic by default)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
