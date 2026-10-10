@@ -1,4 +1,3 @@
-import Script from 'next/script';
 import '../public/dist/css/plugins.css';
 import '../public/dist/css/app.css';
 import '../public/dist/css/verification.css';
@@ -36,12 +35,44 @@ export default function RootLayout({ children }) {
           href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap"
           rel="stylesheet"
         />
-        <Script
-          id="suppress-extension-errors"
-          strategy="beforeInteractive"
+        <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
+                try {
+                  // 1. Intercept setAttribute to block bis_skin_checked from browser extensions (e.g. Urban VPN, Dark Reader)
+                  var origSetAttr = Element.prototype.setAttribute;
+                  Element.prototype.setAttribute = function(name, value) {
+                    if (name && (name === 'bis_skin_checked' || name.indexOf('bis_') === 0)) {
+                      return;
+                    }
+                    return origSetAttr.apply(this, arguments);
+                  };
+
+                  // 2. Intercept property setter for bis_skin_checked
+                  Object.defineProperty(Element.prototype, 'bis_skin_checked', {
+                    set: function() {},
+                    get: function() { return undefined; },
+                    configurable: true,
+                    enumerable: false,
+                  });
+
+                  // 3. Clean up any attributes already placed
+                  var cleanup = function() {
+                    try {
+                      var els = document.querySelectorAll('[bis_skin_checked]');
+                      for (var i = 0; i < els.length; i++) {
+                        els[i].removeAttribute('bis_skin_checked');
+                      }
+                    } catch (e) {}
+                  };
+                  cleanup();
+                  if (typeof document !== 'undefined' && document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', cleanup);
+                  }
+                } catch (e) {}
+
+                // 4. Suppress console noise from extension hydration checks
                 var _origError = console.error;
                 console.error = function() {
                   var str = "";
@@ -61,18 +92,6 @@ export default function RootLayout({ children }) {
                   }
                   _origError.apply(console, arguments);
                 };
-
-                if (typeof MutationObserver !== "undefined") {
-                  var observer = new MutationObserver(function(mutations) {
-                    for (var i = 0; i < mutations.length; i++) {
-                      var m = mutations[i];
-                      if (m.type === "attributes" && m.attributeName === "bis_skin_checked") {
-                        m.target.removeAttribute("bis_skin_checked");
-                      }
-                    }
-                  });
-                  observer.observe(document.documentElement, { attributes: true, subtree: true, attributeFilter: ["bis_skin_checked"] });
-                }
               })();
             `,
           }}
