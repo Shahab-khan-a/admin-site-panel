@@ -293,13 +293,17 @@ export default function AdminPage() {
   };
 
   const handleResetToDefault = async () => {
-    if (!window.confirm('هل أنت متأكد من استعادة القيم الافتراضية؟')) {
+    if (!window.confirm('هل تريد فتح نموذج جديد لإنشاء تصريح جديد؟')) {
       return;
     }
     setEditingToken(null);
     setFormData({ ...DEFAULT_NOTICE_DATA });
     setGeneratedLink(null);
-    showToast('↺ تمت استعادة النموذج إلى البيانات الافتراضية.', 'success');
+    setActiveTab('form');
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    showToast('✓ تم فتح نموذج جديد فارغ وجاهز لتعبئة البيانات.', 'success');
   };
 
   // Save only Footer Settings directly to Firebase Firestore
