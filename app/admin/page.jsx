@@ -65,13 +65,39 @@ export default function AdminPage() {
         if (!active) return;
 
         if (firestoreData.status === 'fulfilled' && firestoreData.value) {
-          setFormData((prev) => ({ ...prev, ...firestoreData.value }));
+          setFormData((prev) => ({
+            ...DEFAULT_NOTICE_DATA,
+            ...firestoreData.value,
+            facilityNumber: '',
+            facilityName: '',
+            beneficiaryCompanyName: '',
+            beneficiaryCompanyNumber: '',
+            workerName: '',
+            noticeNumber: '',
+            iqamaNumber: '',
+            occupation: '',
+            startDate: '2026-09-27',
+            birthDate: '-',
+          }));
         } else {
           try {
             const res = await fetch('/api/notice');
             const json = await res.json();
             if (json.success && json.data && active) {
-              setFormData((prev) => ({ ...prev, ...json.data }));
+              setFormData((prev) => ({
+                ...DEFAULT_NOTICE_DATA,
+                ...json.data,
+                facilityNumber: '',
+                facilityName: '',
+                beneficiaryCompanyName: '',
+                beneficiaryCompanyNumber: '',
+                workerName: '',
+                noticeNumber: '',
+                iqamaNumber: '',
+                occupation: '',
+                startDate: '2026-09-27',
+                birthDate: '-',
+              }));
             }
           } catch (e) {}
         }
@@ -225,7 +251,19 @@ export default function AdminPage() {
   // Cancel edit mode and reset to new permit form
   const handleCancelEdit = () => {
     setEditingToken(null);
-    setFormData({ ...DEFAULT_NOTICE_DATA });
+    setFormData({
+      ...DEFAULT_NOTICE_DATA,
+      facilityNumber: '',
+      facilityName: '',
+      beneficiaryCompanyName: '',
+      beneficiaryCompanyNumber: '',
+      workerName: '',
+      noticeNumber: '',
+      iqamaNumber: '',
+      occupation: '',
+      startDate: '2026-09-27',
+      birthDate: '-',
+    });
     showToast('تم إلغاء التعديل والعودة لوضع إنشاء تصريح جديد.', 'success');
   };
 
@@ -297,7 +335,19 @@ export default function AdminPage() {
       return;
     }
     setEditingToken(null);
-    setFormData({ ...DEFAULT_NOTICE_DATA });
+    setFormData({
+      ...DEFAULT_NOTICE_DATA,
+      facilityNumber: '',
+      facilityName: '',
+      beneficiaryCompanyName: '',
+      beneficiaryCompanyNumber: '',
+      workerName: '',
+      noticeNumber: '',
+      iqamaNumber: '',
+      occupation: '',
+      startDate: '2026-09-27',
+      birthDate: '-',
+    });
     setGeneratedLink(null);
     setActiveTab('form');
     if (typeof window !== 'undefined') {
@@ -986,6 +1036,7 @@ export default function AdminPage() {
                             value={formData.facilityNumber || ''}
                             onChange={handleChange}
                             className="admin-input"
+                            placeholder="رقم المنشأة"
                             required
                           />
                         </div>
