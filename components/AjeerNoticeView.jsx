@@ -135,7 +135,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        backgroundColor: '#edf2f7',
+        backgroundColor: 'rgb(238, 242, 252)',
         fontFamily: "'FrutigerLTArabic-45Light', 'Frutiger LT Arabic', Frutiger, sans-serif",
         color: '#475569',
         position: 'relative',
