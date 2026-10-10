@@ -136,8 +136,8 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
         flexDirection: 'column',
         justifyContent: 'space-between',
         backgroundColor: 'rgb(238, 242, 252)',
-        fontFamily: "'FrutigerLTArabic-45Light', 'Frutiger LT Arabic', Frutiger, sans-serif",
-        color: '#475569',
+        fontFamily: "'Frutiger LT Arabic', 'FrutigerLTArabic-55Roman', 'FrutigerLTArabic-45Light', Frutiger, sans-serif",
+        color: '#1e293b',
         position: 'relative',
       }}
       suppressHydrationWarning
@@ -219,13 +219,13 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
                 cursor: 'pointer',
                 color: '#64748b',
                 fontSize: '14px',
-                fontWeight: 400,
+                fontWeight: 500,
                 padding: '6px 12px',
                 borderRadius: '4px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                fontFamily: "'FrutigerLTArabic-45Light', sans-serif",
+                fontFamily: "'Frutiger LT Arabic', 'FrutigerLTArabic-55Roman', sans-serif",
               }}
             >
               🌐 {isRtl ? 'English' : 'العربية'}
@@ -234,7 +234,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
               href="https://knowledge.qiwa.sa/"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: '#64748b', fontSize: '14px', textDecoration: 'none', fontWeight: 400, fontFamily: "'FrutigerLTArabic-45Light', sans-serif" }}
+              style={{ color: '#475569', fontSize: '14px', textDecoration: 'none', fontWeight: 500, fontFamily: "'Frutiger LT Arabic', 'FrutigerLTArabic-55Roman', sans-serif" }}
             >
               {isRtl ? 'مركز المعرفة' : 'Knowledge center'}
             </a>
@@ -246,11 +246,11 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
                 color: '#152e83',
                 fontSize: '14px',
                 textDecoration: 'none',
-                fontWeight: 500,
-                border: '1px solid #152e83',
+                fontWeight: 600,
+                border: '1.5px solid #152e83',
                 padding: '7px 16px',
                 borderRadius: '4px',
-                fontFamily: "'FrutigerLTArabic-45Light', sans-serif",
+                fontFamily: "'Frutiger LT Arabic', 'FrutigerLTArabic-55Roman', sans-serif",
               }}
             >
               {isRtl ? 'شركات الاستقدام المرخصة' : 'Licensed recruitment companies'}
@@ -259,7 +259,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
               href="https://auth.qiwa.sa/sign-in"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: '#64748b', fontSize: '14px', textDecoration: 'none', fontWeight: 400, fontFamily: "'FrutigerLTArabic-45Light', sans-serif" }}
+              style={{ color: '#475569', fontSize: '14px', textDecoration: 'none', fontWeight: 500, fontFamily: "'Frutiger LT Arabic', 'FrutigerLTArabic-55Roman', sans-serif" }}
             >
               {isRtl ? 'تسجيل الدخول' : 'Sign in'}
             </a>
@@ -272,10 +272,10 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
                 color: '#ffffff',
                 fontSize: '14px',
                 textDecoration: 'none',
-                fontWeight: 500,
+                fontWeight: 600,
                 padding: '8px 20px',
                 borderRadius: '4px',
-                fontFamily: "'FrutigerLTArabic-45Light', sans-serif",
+                fontFamily: "'Frutiger LT Arabic', 'FrutigerLTArabic-55Roman', sans-serif",
               }}
             >
               {isRtl ? 'تسجيل جديد' : 'Register'}
@@ -417,11 +417,11 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
         <h1
           style={{
             fontSize: '26px',
-            fontWeight: 500,
+            fontWeight: 700,
             color: '#152e83',
             margin: '0 0 20px 0',
             textAlign: isRtl ? 'right' : 'left',
-            fontFamily: "'FrutigerLTArabic-45Light', sans-serif",
+            fontFamily: "'Frutiger LT Arabic', 'FrutigerLTArabic-65Bold', sans-serif",
             letterSpacing: '0px',
           }}
         >
@@ -651,17 +651,42 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
       {/* Global Font Face declarations for Frutiger LT Arabic (all weights) and overlay suppression */}
       <style jsx global>{`
         @font-face {
-          font-family: 'FrutigerLTArabic-45Light';
-          src: url('/assets/FrutigerLTArabic-45Light-SlJtknaV.woff') format('woff'),
-               url('/assets/FrutigerLTArabic-45Light-DYShZyg5.ttf') format('truetype');
-          font-weight: 300;
+          font-family: 'Frutiger LT Arabic';
+          src: url('/assets/FrutigerLTArabic-55Roman-MWBpO6AF.woff') format('woff'),
+               url('/assets/FrutigerLTArabic-55Roman-DcatSmBs.ttf') format('truetype');
+          font-weight: 400;
           font-style: normal;
           font-display: swap;
         }
         @font-face {
+          font-family: 'Frutiger LT Arabic';
+          src: url('/assets/FrutigerLTArabic-55Roman-MWBpO6AF.woff') format('woff'),
+               url('/assets/FrutigerLTArabic-55Roman-DcatSmBs.ttf') format('truetype');
+          font-weight: 500;
+          font-style: normal;
+          font-display: swap;
+        }
+        @font-face {
+          font-family: 'Frutiger LT Arabic';
+          src: url('/assets/FrutigerLTArabic-65Bold-JBA9amnD.woff') format('woff'),
+               url('/assets/FrutigerLTArabic-65Bold-DZRczdd_.ttf') format('truetype');
+          font-weight: 600;
+          font-style: normal;
+          font-display: swap;
+        }
+        @font-face {
+          font-family: 'Frutiger LT Arabic';
+          src: url('/assets/FrutigerLTArabic-65Bold-JBA9amnD.woff') format('woff'),
+               url('/assets/FrutigerLTArabic-65Bold-DZRczdd_.ttf') format('truetype');
+          font-weight: 700;
+          font-style: normal;
+          font-display: swap;
+        }
+
+        @font-face {
           font-family: 'FrutigerLTArabic-45Light';
-          src: url('/assets/FrutigerLTArabic-45Light-SlJtknaV.woff') format('woff'),
-               url('/assets/FrutigerLTArabic-45Light-DYShZyg5.ttf') format('truetype');
+          src: url('/assets/FrutigerLTArabic-55Roman-MWBpO6AF.woff') format('woff'),
+               url('/assets/FrutigerLTArabic-55Roman-DcatSmBs.ttf') format('truetype');
           font-weight: 400;
           font-style: normal;
           font-display: swap;
@@ -693,7 +718,7 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
 
         .ajeer-page-root,
         .ajeer-page-root * {
-          font-family: 'FrutigerLTArabic-45Light', 'FrutigerLTArabic-55Roman', 'Frutiger LT Arabic', Frutiger, sans-serif !important;
+          font-family: 'Frutiger LT Arabic', 'FrutigerLTArabic-55Roman', 'FrutigerLTArabic-65Bold', Frutiger, sans-serif !important;
         }
 
         /* Suppress Next.js dev overlay circle icon ("N") completely */
@@ -744,13 +769,12 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
         .ajeer-card-header {
           padding: 16px 20px;
           border-bottom: 1px solid #f1f4f8;
-          font-size: 15px;
-          font-weight: 500;
+          font-size: 15.5px;
+          font-weight: 700;
           color: #152e83;
           text-transform: uppercase;
           background-color: #ffffff;
           letter-spacing: 0.3px;
-          font-family: 'FrutigerLTArabic-45Light', sans-serif !important;
         }
 
         .ajeer-card-body {
@@ -768,41 +792,38 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
         }
 
         .ajeer-field-label {
-          font-size: 13px;
-          color: #64748b;
+          font-size: 13.5px;
+          color: #475569;
           margin-bottom: 4px;
-          font-weight: 300;
+          font-weight: 500;
           line-height: 1.4;
-          font-family: 'FrutigerLTArabic-45Light', sans-serif !important;
         }
 
         .ajeer-field-value {
           font-size: 15px;
-          font-weight: 400;
-          color: #475569;
+          font-weight: 600;
+          color: #1e293b;
           word-break: break-word;
           line-height: 1.5;
-          font-family: 'FrutigerLTArabic-45Light', sans-serif !important;
         }
 
         .ajeer-field-name {
           text-transform: uppercase;
           letter-spacing: 0.3px;
-          font-weight: 400;
-          color: #475569;
+          font-weight: 600;
+          color: #1e293b;
         }
 
         .ajeer-field-arabic {
-          font-family: 'FrutigerLTArabic-45Light', sans-serif !important;
-          font-weight: 400;
-          color: #475569;
+          font-weight: 600;
+          color: #1e293b;
           line-height: 1.6;
         }
 
         .ajeer-badge {
           display: inline-block;
           font-size: 13px;
-          font-weight: 500;
+          font-weight: 700;
           padding: 4px 14px;
           border-radius: 4px;
           text-transform: uppercase;
@@ -810,7 +831,6 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
           background-color: #eef2fb;
           color: #152e83;
           letter-spacing: 0.3px;
-          font-family: 'FrutigerLTArabic-45Light', sans-serif !important;
         }
 
         .ajeer-action-wrapper {
@@ -827,13 +847,12 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
           border-radius: 6px;
           padding: 12px 24px;
           font-size: 15px;
-          font-weight: 500;
+          font-weight: 600;
           cursor: pointer;
           display: inline-flex;
           align-items: center;
           justify-content: center;
           gap: 10px;
-          font-family: 'FrutigerLTArabic-45Light', sans-serif !important;
           height: 48px;
           box-shadow: 0 2px 4px rgba(21, 46, 131, 0.2);
           transition: background-color 0.2s ease;
@@ -849,7 +868,6 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
           padding: 36px 20px 28px 20px;
           width: 100%;
           box-sizing: border-box;
-          font-family: 'FrutigerLTArabic-45Light', sans-serif !important;
         }
 
         .ajeer-footer-content {
@@ -870,12 +888,11 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
         }
 
         .ajeer-footer-link {
-          color: #64748b;
+          color: #475569;
           font-size: 14px;
-          font-weight: 300;
+          font-weight: 500;
           text-decoration: none;
           transition: color 0.2s;
-          font-family: 'FrutigerLTArabic-45Light', sans-serif !important;
         }
 
         .ajeer-footer-link:hover {
@@ -883,11 +900,10 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
         }
 
         .ajeer-footer-copyright {
-          color: #64748b;
+          color: #475569;
           font-size: 14px;
-          font-weight: 300;
+          font-weight: 500;
           margin-bottom: 16px;
-          font-family: 'FrutigerLTArabic-45Light', sans-serif !important;
         }
 
         .ajeer-footer-lang-wrap {
@@ -898,13 +914,12 @@ export default function AjeerNoticeView({ tokenData, tokenId }) {
           background: none;
           border: none;
           cursor: pointer;
-          color: #64748b;
+          color: #475569;
           font-size: 15px;
-          font-weight: 400;
+          font-weight: 500;
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          font-family: 'FrutigerLTArabic-45Light', sans-serif !important;
           padding: 6px 12px;
         }
 
