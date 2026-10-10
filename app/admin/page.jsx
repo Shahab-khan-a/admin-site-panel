@@ -1003,6 +1003,7 @@ export default function AdminPage() {
                             value={formData.facilityName || ''}
                             onChange={handleChange}
                             className="admin-input"
+                            placeholder="اسم المنشأة"
                             required
                           />
                         </div>
