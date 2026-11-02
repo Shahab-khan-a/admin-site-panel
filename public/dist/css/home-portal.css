@@ -1,0 +1,939 @@
+/* ========================================================
+   MODERN ENTERPRISE DIGITAL VERIFICATION PORTAL (WATHEEQ)
+   100% Custom, Elegant, High-Tech, & Fully Interactive UI
+   ======================================================== */
+
+:root {
+  --w-primary: #0f766e;
+  --w-primary-dark: #115e59;
+  --w-primary-light: #14b8a6;
+  --w-accent: #0284c7;
+  --w-accent-glow: rgba(20, 184, 166, 0.25);
+  --w-bg-dark: #0f172a;
+  --w-bg-slate: #f8fafc;
+  --w-card-bg: #ffffff;
+  --w-text-main: #0f172a;
+  --w-text-muted: #64748b;
+  --w-border: #e2e8f0;
+}
+
+.watheeq-root {
+  min-height: 100vh;
+  background-color: var(--w-bg-slate);
+  color: var(--w-text-main);
+  font-family: 'Cairo', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  direction: rtl;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ================= TOP GLOW / BACKGROUND ================= */
+.watheeq-ambient-glow {
+  position: absolute;
+  top: 0;
+  right: 15%;
+  width: 550px;
+  height: 450px;
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.12) 0%, rgba(15, 118, 110, 0.03) 50%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(60px);
+}
+
+.watheeq-ambient-glow-2 {
+  position: absolute;
+  top: 300px;
+  left: 5%;
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(circle, rgba(2, 132, 199, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(60px);
+}
+
+/* ================= MODERN HEADER ================= */
+.watheeq-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  transition: all 0.3s ease;
+}
+
+.watheeq-header-inner {
+  max-width: 1260px;
+  margin: 0 auto;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.watheeq-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.watheeq-brand-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0f766e 0%, #0284c7 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.28);
+  transition: transform 0.3s ease;
+}
+
+.watheeq-brand:hover .watheeq-brand-icon {
+  transform: rotate(5deg) scale(1.05);
+}
+
+.watheeq-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.watheeq-brand-name {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.watheeq-brand-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0f766e;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.watheeq-nav {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.watheeq-nav-link {
+  color: #475569;
+  font-size: 14.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  padding: 6px 0;
+  position: relative;
+}
+
+.watheeq-nav-link:hover,
+.watheeq-nav-link.active {
+  color: var(--w-primary);
+}
+
+.watheeq-nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  height: 2.5px;
+  background: var(--w-primary);
+  border-radius: 2px;
+}
+
+.watheeq-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.watheeq-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.watheeq-btn-outline:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.watheeq-btn-solid {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+  color: #ffffff !important;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.25);
+  transition: all 0.25s ease;
+}
+
+.watheeq-btn-solid:hover {
+  background: linear-gradient(135deg, #115e59 0%, #0f766e 100%);
+  box-shadow: 0 6px 20px rgba(15, 118, 110, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ================= HERO SECTION ================= */
+.watheeq-hero {
+  position: relative;
+  padding: 72px 24px 64px;
+  z-index: 1;
+}
+
+.watheeq-hero-container {
+  max-width: 1260px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.watheeq-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.watheeq-pill-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.watheeq-hero-title {
+  font-size: 42px;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1.3;
+  margin-bottom: 20px;
+  letter-spacing: -0.5px;
+}
+
+.watheeq-gradient-text {
+  background: linear-gradient(135deg, #0f766e 0%, #0284c7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.watheeq-hero-desc {
+  font-size: 17px;
+  line-height: 1.75;
+  color: #475569;
+  margin-bottom: 32px;
+  max-width: 580px;
+}
+
+/* ================= INTERACTIVE SEARCH CARD ================= */
+.watheeq-search-card {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.07);
+  position: relative;
+  transition: box-shadow 0.3s ease;
+}
+
+.watheeq-search-card:hover {
+  box-shadow: 0 16px 44px rgba(15, 23, 42, 0.1);
+}
+
+.watheeq-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+}
+
+.watheeq-tab {
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #64748b;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.watheeq-tab:hover {
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+.watheeq-tab.active {
+  background: #f0fdf4;
+  color: #0f766e;
+  font-weight: 700;
+}
+
+.watheeq-search-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.watheeq-input-wrap {
+  flex: 1;
+  position: relative;
+}
+
+.watheeq-input {
+  width: 100%;
+  padding: 14px 44px 14px 16px;
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 15px;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.25s ease;
+  direction: ltr;
+  text-align: right;
+}
+
+.watheeq-input:focus {
+  background: #ffffff;
+  border-color: #0f766e;
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.15);
+}
+
+.watheeq-input-icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.watheeq-btn-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+  color: #ffffff;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.25);
+  transition: all 0.25s ease;
+}
+
+.watheeq-btn-search:hover {
+  background: linear-gradient(135deg, #115e59 0%, #0f766e 100%);
+  transform: translateY(-1px);
+}
+
+.watheeq-btn-search:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.watheeq-alert {
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  animation: fadeIn 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.watheeq-alert-error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.watheeq-alert-success {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.watheeq-search-footer {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: #64748b;
+}
+
+.watheeq-live-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #0f766e;
+  font-weight: 600;
+}
+
+/* ================= HERO INTERACTIVE CREDENTIAL PREVIEW ================= */
+.watheeq-hero-graphic {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.watheeq-card-mockup {
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  border: 1.5px solid #e2e8f0;
+  border-radius: 22px;
+  padding: 28px;
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
+  width: 100%;
+  max-width: 460px;
+  position: relative;
+  overflow: hidden;
+}
+
+.watheeq-mockup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px dashed #cbd5e1;
+  padding-bottom: 18px;
+  margin-bottom: 20px;
+}
+
+.watheeq-mockup-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0fdf4;
+  color: #15803d;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid #bbf7d0;
+}
+
+.watheeq-mockup-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.watheeq-mockup-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #f1f5f9;
+}
+
+.watheeq-mockup-label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.watheeq-mockup-val {
+  font-size: 13.5px;
+  color: #0f172a;
+  font-weight: 700;
+  font-family: monospace;
+}
+
+.watheeq-mockup-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.watheeq-shield-seal {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.watheeq-seal-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0f766e 0%, #0284c7 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 18px;
+}
+
+.watheeq-seal-title {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.watheeq-seal-sub {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* ================= STATS SECTION ================= */
+.watheeq-stats-bar {
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 40px 24px;
+}
+
+.watheeq-stats-grid {
+  max-width: 1260px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.watheeq-stat-box {
+  text-align: center;
+  padding: 12px 16px;
+  border-left: 1px solid #f1f5f9;
+}
+
+.watheeq-stat-box:last-child {
+  border-left: none;
+}
+
+.watheeq-stat-num {
+  font-size: 36px;
+  font-weight: 900;
+  color: #0f766e;
+  line-height: 1.1;
+  margin-bottom: 6px;
+  letter-spacing: -1px;
+}
+
+.watheeq-stat-lbl {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+/* ================= FEATURES GRID ================= */
+.watheeq-features {
+  max-width: 1260px;
+  margin: 0 auto;
+  padding: 80px 24px;
+}
+
+.watheeq-section-head {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 52px;
+}
+
+.watheeq-subhead {
+  display: inline-block;
+  color: #0f766e;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.watheeq-title {
+  font-size: 32px;
+  font-weight: 900;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+.watheeq-desc {
+  font-size: 16px;
+  color: #64748b;
+  line-height: 1.7;
+}
+
+.watheeq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 28px;
+}
+
+.watheeq-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 32px 24px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  cursor: pointer;
+}
+
+.watheeq-card:hover {
+  transform: translateY(-6px);
+  border-color: #0f766e;
+  box-shadow: 0 16px 36px rgba(15, 118, 110, 0.1);
+}
+
+.watheeq-card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.1) 0%, rgba(2, 132, 199, 0.08) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0f766e;
+  font-size: 26px;
+  margin-bottom: 22px;
+}
+
+.watheeq-card-title {
+  font-size: 19px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 10px;
+}
+
+.watheeq-card-text {
+  font-size: 14.5px;
+  color: #64748b;
+  line-height: 1.65;
+  margin-bottom: 20px;
+  flex-grow: 1;
+}
+
+.watheeq-card-badge {
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f766e;
+  background: #f0fdf4;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+/* ================= WORKFLOW STEPS ================= */
+.watheeq-steps-section {
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 80px 24px;
+}
+
+.watheeq-steps-container {
+  max-width: 1260px;
+  margin: 0 auto;
+}
+
+.watheeq-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  margin-top: 48px;
+}
+
+.watheeq-step-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 32px 24px;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.watheeq-step-box:hover {
+  background: #ffffff;
+  border-color: #0f766e;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.05);
+}
+
+.watheeq-step-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0f766e 0%, #0284c7 100%);
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  box-shadow: 0 6px 18px rgba(15, 118, 110, 0.28);
+}
+
+.watheeq-step-name {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 10px;
+}
+
+.watheeq-step-desc {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+/* ================= FAQ SECTION ================= */
+.watheeq-faq-section {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 80px 24px;
+}
+
+.watheeq-faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.watheeq-faq-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.watheeq-faq-item:hover {
+  border-color: #cbd5e1;
+}
+
+.watheeq-faq-btn {
+  width: 100%;
+  padding: 20px 24px;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 16.5px;
+  font-weight: 700;
+  color: #0f172a;
+  text-align: right;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: color 0.2s ease;
+}
+
+.watheeq-faq-btn:hover {
+  color: #0f766e;
+}
+
+.watheeq-faq-icon {
+  font-size: 16px;
+  color: #0f766e;
+  transition: transform 0.3s ease;
+}
+
+.watheeq-faq-item.open .watheeq-faq-icon {
+  transform: rotate(180deg);
+}
+
+.watheeq-faq-content {
+  padding: 0 24px 22px;
+  font-size: 15px;
+  color: #475569;
+  line-height: 1.75;
+}
+
+/* ================= CTA BANNER ================= */
+.watheeq-cta {
+  max-width: 1260px;
+  margin: 0 auto 80px;
+  padding: 0 24px;
+}
+
+.watheeq-cta-box {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-radius: 24px;
+  padding: 56px 40px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.2);
+}
+
+.watheeq-cta-title {
+  font-size: 28px;
+  font-weight: 900;
+  margin-bottom: 10px;
+  color: #ffffff;
+}
+
+.watheeq-cta-sub {
+  font-size: 16px;
+  color: #94a3b8;
+  max-width: 520px;
+}
+
+/* ================= MODERN SAAS FOOTER ================= */
+.watheeq-footer {
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  padding: 48px 24px 32px;
+}
+
+.watheeq-footer-inner {
+  max-width: 1260px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.watheeq-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.watheeq-footer-copy {
+  font-size: 13.5px;
+  color: #64748b;
+}
+
+.watheeq-footer-badges {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 12.5px;
+  color: #64748b;
+}
+
+.watheeq-badge-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+  .watheeq-hero-container {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  .watheeq-hero-desc {
+    margin: 0 auto 32px;
+  }
+  .watheeq-nav {
+    display: none;
+  }
+  .watheeq-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .watheeq-stat-box:nth-child(2) {
+    border-left: none;
+  }
+  .watheeq-steps-grid {
+    grid-template-columns: 1fr;
+  }
+  .watheeq-cta-box {
+    flex-direction: column;
+    text-align: center;
+    gap: 28px;
+  }
+}
+
+@media (max-width: 640px) {
+  .watheeq-hero-title {
+    font-size: 30px;
+  }
+  .watheeq-search-form {
+    flex-direction: column;
+  }
+  .watheeq-btn-search {
+    width: 100%;
+    justify-content: center;
+  }
+  .watheeq-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .watheeq-stat-box {
+    border-left: none;
+    border-bottom: 1px solid #f1f5f9;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

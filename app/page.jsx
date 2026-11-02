@@ -1,10 +1,8 @@
-import VerificationView from '../components/VerificationView';
-import { getNoticeData } from '../lib/storage';
+import HomePortalView from '../components/HomePortalView';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function HomePage() {
-  const tokenData = await getNoticeData('current');
-  return <VerificationView tokenData={tokenData} tokenId="current" />;
+export default function HomePage() {
+  return <HomePortalView />;
 }
